@@ -92,7 +92,7 @@ public class PluginService
         }
     }
     
-    public async Task RunPrePost(WebApplication webApplication)
+    public async Task RunPostInit(WebApplication webApplication)
     {
         foreach (var plugin in Plugins)
         {

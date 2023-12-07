@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Moonlight.App.Database.Entities;
 using Moonlight.App.Database.Entities.Community;
+using Moonlight.App.Database.Entities.Servers;
 using Moonlight.App.Database.Entities.Store;
 using Moonlight.App.Database.Entities.Tickets;
 using Moonlight.App.Services;
@@ -34,6 +35,15 @@ public class DataContext : DbContext
     // Tickets
     public DbSet<Ticket> Tickets { get; set; }
     public DbSet<TicketMessage> TicketMessages { get; set; }
+    
+    // Servers
+    public DbSet<Server> Servers { get; set; }
+    public DbSet<ServerImage> ServerImages { get; set; }
+    public DbSet<ServerNode> ServerNodes { get; set; }
+    public DbSet<ServerAllocation> ServerAllocations { get; set; }
+    public DbSet<ServerVariable> ServerVariables { get; set; }
+    public DbSet<ServerImageVariable> ServerImageVariables { get; set; }
+    public DbSet<ServerDockerImage> ServerDockerImages { get; set; }
 
     public DataContext(ConfigService configService)
     {

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Moonlight.App.Database;
 
@@ -10,9 +11,11 @@ using Moonlight.App.Database;
 namespace Moonlight.App.Database.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20231202181327_AddedServerModels")]
+    partial class AddedServerModels
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.2");
@@ -126,22 +129,10 @@ namespace Moonlight.App.Database.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("Cpu")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("Disk")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("DockerImageIndex")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("ImageId")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("MainAllocationId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("Memory")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("NodeId")

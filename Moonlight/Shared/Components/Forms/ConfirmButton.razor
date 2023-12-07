@@ -1,22 +1,22 @@
 ﻿@if (ShowConfirm)
 {
     <div class="btn-group">
-        <button class="btn btn-success me-2 rounded-end" @onclick="Do">Confirm</button>
-        <button class="btn btn-danger rounded-start" @onclick="() => SetConfirm(false)">Cancel</button>
+        <button class="btn btn-success me-2 rounded-end" type="button" @onclick="Do">Confirm</button>
+        <button class="btn btn-danger rounded-start" type="button" @onclick="() => SetConfirm(false)">Cancel</button>
     </div>
 }
 else
 {
     if (Working)
     {
-        <button class="btn @(CssClasses) disabled" disabled="">
+        <button class="btn @(CssClasses) disabled" type="button" disabled="">
             <span class="spinner-border spinner-border-sm align-middle me-2"></span>
             @WorkingText
         </button>
     }
     else
     {
-        <button class="btn @(CssClasses)" @onclick="() => SetConfirm(true)">
+        <button class="btn @(CssClasses)" type="button" @onclick="() => SetConfirm(true)">
             @Text
             @ChildContent
         </button>

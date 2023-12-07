@@ -1,0 +1,83 @@
+@page "/admin/servers/nodes/new"
+
+@using Moonlight.App.Extensions.Attributes
+@using Moonlight.App.Models.Enums
+@using Moonlight.App.Repositories
+@using Moonlight.App.Database.Entities.Servers
+@using Moonlight.App.Models.Forms.Admin.Servers.Nodes
+@using Mappy.Net
+
+@attribute [RequirePermission(Permission.AdminServersNodes)]
+
+@inject Repository<ServerNode> NodeRepository
+@inject ToastService ToastService
+@inject NavigationManager Navigation
+
+<SmartForm Model="Form" OnValidSubmit="Submit">
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">General</span>
+        </div>
+        <div class="card-body">
+            <div class="row g-5">
+                <label class="form-label">Name</label>
+                <input @bind="Form.Name" type="text" class="form-control form-control-solid" placeholder="Name of your node">
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-5">
+        <div class="card-header">
+            <span class="card-title">Connection</span>
+        </div>
+        <div class="card-body">
+            <div class="row g-5">
+                <div class="col-md-4">
+                    <label class="form-label">FQDN</label>
+                    <div class="form-text fs-5 mb-2 mt-0">
+                        The full qualified domain name of your node. You can use an ip address
+                    </div>
+                    <input @bind="Form.Fqdn" type="text" class="form-control form-control-solid" placeholder="node69.your-domain.xyz">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Http Port</label>
+                    <div class="form-text fs-5 mb-2 mt-0">
+                        The port where the http server of the daemon is listening on
+                    </div>
+                    <input @bind="Form.HttpPort" type="number" class="form-control form-control-solid">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-check form-switch form-check-custom form-check-solid">
+                        <input class="form-check-input" type="checkbox" @bind="Form.UseSsl"/>
+                        <span class="form-check-label fw-semibold text-muted">
+                            Use SSL
+                        </span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card mt-5">
+        <div class="card-body text-end">
+            <button class="btn btn-success" type="submit">Save changes</button>
+        </div>
+    </div>
+</SmartForm>
+
+@code
+{
+    private NodeForm Form = new();
+
+    private async Task Submit()
+    {
+        var node = Mapper.Map<ServerNode>(Form);
+
+        // Generate token
+        node.Token = Guid.NewGuid().ToString().Replace("-", "");
+        
+        NodeRepository.Add(node);
+
+        await ToastService.Success("Successfully added node");
+        Navigation.NavigateTo("/admin/servers/nodes");
+    }
+}

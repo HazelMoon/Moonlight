@@ -1,0 +1,268 @@
+@page "/admin/servers/images"
+
+@using Moonlight.App.Extensions.Attributes
+@using Moonlight.App.Models.Enums
+@using BlazorTable
+@using Mappy.Net
+@using Microsoft.AspNetCore.Components.Forms
+@using Moonlight.App.Database.Entities.Servers
+@using Moonlight.App.Models
+@using Moonlight.App.Repositories
+@using Newtonsoft.Json
+@using System.Text
+@using Microsoft.EntityFrameworkCore
+@using Moonlight.App.Models.Server
+
+@attribute [RequirePermission(Permission.AdminServers)]
+
+@inject Repository<ServerImage> ImageRepository
+@inject Repository<ServerDockerImage> DockerImageRepository
+@inject Repository<ServerImageVariable> VariableRepository
+@inject Repository<Server> ServerRepository
+@inject ToastService ToastService
+@inject FileDownloadService DownloadService
+@inject NavigationManager Navigation
+
+<AdminServersNavigation Index="1"/>
+
+<div class="card mt-5">
+    <div class="card-header">
+        <h3 class="card-title">Images</h3>
+        <div class="card-toolbar">
+            <div class="btn-group btn-group-sm">
+                <div class="me-3">
+                    <a class="btn btn-sm btn-success" href="/admin/servers/images/new">
+                        <i class="bx bx-sm bx-plus me-3"></i>
+                        New
+                    </a>
+                </div>
+                <div class="me-3">
+                    <SmartCustomFileSelect @ref="ImageUpload" OnFileSelected="ImportImage">
+                        <div class="btn btn-sm btn-primary">
+                            <i class="bx bx-sm bx-upload me-3"></i>
+                            Import image
+                        </div>
+                    </SmartCustomFileSelect>
+                </div>
+                <div class="me-3">
+                    <WButton OnClick="UpdateAll" WorkingText="Updating" CssClasses="btn btn-sm btn-info">
+                        <i class="bx bx-sm bx-refresh me-3"></i>
+                        Update all
+                    </WButton>
+                </div>
+                <SmartCustomFileSelect @ref="EggUpload" OnFileSelected="ImportEgg">
+                    <div class="btn btn-sm btn-secondary">
+                        <i class="bx bx-sm bx-upload me-3"></i>
+                        Import egg
+                    </div>
+                </SmartCustomFileSelect>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <LazyLoader @ref="LazyLoader" Load="Load">
+            <Table TableItem="ServerImage"
+                   Items="AllImages"
+                   PageSize="50"
+                   TableClass="table table-row-bordered table-row-gray-100 align-middle gs-0 gy-3 fs-6"
+                   TableHeadClass="fw-bold text-muted">
+                <Column TableItem="ServerImage" Field="@(x => x.Id)" Title="Id" Filterable="true" Sortable="true"/>
+                <Column TableItem="ServerImage" Field="@(x => x.Name)" Title="Name" Filterable="true" Sortable="false">
+                    <Template>
+                        <a href="/admin/servers/images/view/@(context.Id)">@(context.Name)</a>
+                    </Template>
+                </Column>
+                <Column TableItem="ServerImage" Field="@(x => x.Author)" Title="Author" Filterable="true" Sortable="true"/>
+                <Column TableItem="ServerImage" Field="@(x => x.Id)" Title="" Filterable="false" Sortable="false">
+                    <Template>
+                        <div class="text-end">
+                            <div class="btn-group">
+                                @if (context.DonateUrl != null)
+                                {
+                                    <a class="btn btn-sm btn-info" href="@(context.DonateUrl)" target="_blank">Donate</a>
+                                }
+                                @if (context.UpdateUrl != null)
+                                {
+                                    <WButton OnClick="() => FetchImageUpdate(context)" Text="Update" WorkingText="Updating" CssClasses="btn btn-sm btn-primary"/>
+                                }
+                                <WButton OnClick="() => ExportImage(context)" Text="Export" CssClasses="btn btn-sm btn-secondary"/>
+                                <ConfirmButton OnClick="() => DeleteImage(context)" Text="Delete" WorkingText="Deleting" CssClasses="btn btn-sm btn-danger"/>
+                            </div>
+                        </div>
+                    </Template>
+                </Column>
+                <Pager ShowPageNumber="true" ShowTotalCount="true" AlwaysShow="true"/>
+            </Table>
+        </LazyLoader>
+    </div>
+</div>
+
+@code
+{
+    private ServerImage[] AllImages;
+
+    private LazyLoader LazyLoader;
+    private SmartCustomFileSelect ImageUpload;
+    private SmartCustomFileSelect EggUpload;
+
+    private async Task Load(LazyLoader lazyLoader)
+    {
+        AllImages = ImageRepository
+            .Get()
+            .Include(x => x.DockerImages)
+            .Include(x => x.Variables)
+            .ToArray();
+    }
+
+    private async Task UpdateAll()
+    {
+        foreach (var image in AllImages)
+            await FetchImageUpdate(image);
+    }
+
+    private async Task FetchImageUpdate(ServerImage image)
+    {
+        if (image.UpdateUrl == null)
+            return;
+
+        using var httpClient = new HttpClient();
+        var json = await httpClient.GetStringAsync(image.UpdateUrl);
+
+        var import = JsonConvert.DeserializeObject<ImageImport>(json);
+
+        if (import == null)
+            throw new DisplayException("Error while parsing json text while updating image");
+
+    // As i am too lazy to update the variables nor the docker images
+    // because we mapped them, we will just delete the old ones and add
+    // the current state as new ones
+
+        var dockerImages = image.DockerImages.ToArray();
+        var variables = image.Variables.ToArray();
+
+        image.DockerImages.Clear();
+        image.Variables.Clear();
+
+        foreach (var dockerImage in dockerImages)
+            DockerImageRepository.Delete(dockerImage);
+
+        foreach (var variable in variables)
+            VariableRepository.Delete(variable);
+
+        ImageRepository.Update(image);
+
+    // Now we can start with updating the image
+
+        var imageToUpdate = Mapper.Map(image, import);
+
+        imageToUpdate.DockerImages = import.ImageDockerImages
+            .Select(x => Mapper.Map<ServerDockerImage>(x)).
+            ToList();
+
+        imageToUpdate.Variables = import.ImageVariables
+            .Select(x => Mapper.Map<ServerImageVariable>(x))
+            .ToList();
+
+        ImageRepository.Update(imageToUpdate);
+
+        await ToastService.Success($"Successfully updated '{imageToUpdate.Name}'");
+    }
+
+    private async Task ImportImage(IBrowserFile file)
+    {
+        try
+        {
+            if (file.ContentType != "application/json")
+                throw new DisplayException("Unknown file type. Only .json is supported");
+
+            var stream = file.OpenReadStream();
+            var streamReader = new StreamReader(stream);
+            var text = await streamReader.ReadToEndAsync();
+            var image = JsonConvert.DeserializeObject<ImageImport>(text);
+
+            if (image == null)
+                throw new DisplayException("Unable to parse image json");
+
+            var imageToAdd = Mapper.Map<ServerImage>(image);
+
+            imageToAdd.DockerImages = image.ImageDockerImages
+                .Select(x => Mapper.Map<ServerDockerImage>(x)).
+                ToList();
+
+            imageToAdd.Variables = image.ImageVariables
+                .Select(x => Mapper.Map<ServerImageVariable>(x))
+                .ToList();
+
+            ImageRepository.Add(imageToAdd);
+
+            await ToastService.Success($"Successfully imported image '{imageToAdd.Name}'");
+            await LazyLoader.Reload();
+        }
+        catch (DisplayException e)
+        {
+            await ToastService.Danger(e.Message);
+        }
+        finally
+        {
+            await ImageUpload.RemoveSelection();
+        }
+    }
+
+    private async Task ImportEgg(IBrowserFile file)
+    {
+        try
+        {
+        }
+        catch (DisplayException e)
+        {
+            await ToastService.Danger(e.Message);
+        }
+        finally
+        {
+            await EggUpload.RemoveSelection();
+        }
+    }
+
+    private async Task DeleteImage(ServerImage image)
+    {
+        if (ServerRepository.Get().Any(x => x.Image.Id == image.Id))
+            throw new DisplayException("One or more servers using this image exist. Delete them before deleting the image");
+
+        var dockerImages = image.DockerImages.ToArray();
+        var variables = image.Variables.ToArray();
+
+        image.DockerImages.Clear();
+        image.Variables.Clear();
+
+        ImageRepository.Update(image);
+
+        foreach (var dockerImage in dockerImages)
+            DockerImageRepository.Delete(dockerImage);
+
+        foreach (var variable in variables)
+            VariableRepository.Delete(variable);
+
+        ImageRepository.Delete(image);
+
+        await ToastService.Success($"Successfully deleted image '{image.Name}'");
+        await LazyLoader.Reload();
+    }
+
+    private async Task ExportImage(ServerImage image)
+    {
+        var export = Mapper.Map<ImageExport>(image);
+
+        export.ImageDockerImages = image.DockerImages
+            .Select(x => Mapper.Map<ImageExport.DockerImage>(x))
+            .ToList();
+
+        export.ImageVariables = image.Variables
+            .Select(x => Mapper.Map<ImageExport.Variable>(x))
+            .ToList();
+
+        var json = JsonConvert.SerializeObject(export, Formatting.Indented);
+
+        await ToastService.Info("Starting image download");
+        await DownloadService.DownloadString($"{image.Name}.json", json);
+    }
+}

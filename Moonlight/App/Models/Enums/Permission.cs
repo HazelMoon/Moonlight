@@ -12,6 +12,10 @@ public enum Permission
     AdminCommunity = 1030,
     AdminServices = 1050,
     AdminStore = 1900,
+    AdminServers = 1940,
+    AdminServersManager = 1948,
+    AdminServersNodes = 1949,
+    AdminServersImages = 1950,
     AdminViewExceptions = 1999,
     AdminRoot = 2000
 }

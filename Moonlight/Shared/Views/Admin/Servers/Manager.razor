@@ -1,0 +1,8 @@
+@page "/admin/servers/manager"
+
+@using Moonlight.App.Extensions.Attributes
+@using Moonlight.App.Models.Enums
+
+@attribute [RequirePermission(Permission.AdminServersManager)]
+
+<AdminServersNavigation Index="3" />

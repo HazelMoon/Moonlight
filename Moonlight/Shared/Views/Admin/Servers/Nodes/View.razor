@@ -1,0 +1,238 @@
+@page "/admin/servers/nodes/view/{Id:int}"
+
+@using Moonlight.App.Extensions.Attributes
+@using Moonlight.App.Models.Enums
+@using Moonlight.App.Database.Entities.Servers
+@using Moonlight.App.Repositories
+@using Microsoft.EntityFrameworkCore
+@using Moonlight.App.Models.Forms.Admin.Servers.Nodes
+@using Mappy.Net
+@using BlazorTable
+
+@attribute [RequirePermission(Permission.AdminServersNodes)]
+
+@inject Repository<ServerNode> NodeRepository
+@inject Repository<ServerAllocation> AllocationRepository
+@inject Repository<Server> ServerRepository
+@inject ToastService ToastService
+@inject AlertService AlertService
+
+<LazyLoader @ref="LazyLoader" Load="Load" ShowAsCard="true">
+    @if (Node == null)
+    {
+        <NotFoundAlert/>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-md-6 mb-5">
+                <SmartForm Model="Form" OnValidSubmit="SubmitNode">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">General</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-5">
+                                <label class="form-label">Name</label>
+                                <input @bind="Form.Name" type="text" class="form-control form-control-solid" placeholder="Name of your node">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mt-5">
+                        <div class="card-header">
+                            <span class="card-title">Connection</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-5">
+                                <div class="col-md-4">
+                                    <label class="form-label">FQDN</label>
+                                    <div class="form-text fs-5 mb-2 mt-0">
+                                        The full qualified domain name of your node. You can use an ip address
+                                    </div>
+                                    <input @bind="Form.Fqdn" type="text" class="form-control form-control-solid" placeholder="node69.your-domain.xyz">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Http Port</label>
+                                    <div class="form-text fs-5 mb-2 mt-0">
+                                        The port where the http server of the daemon is listening on
+                                    </div>
+                                    <input @bind="Form.HttpPort" type="number" class="form-control form-control-solid">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-check form-switch form-check-custom form-check-solid">
+                                        <input class="form-check-input" type="checkbox" @bind="Form.UseSsl"/>
+                                        <span class="form-check-label fw-semibold text-muted">
+                                            Use SSL
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card mt-5">
+                        <div class="card-header">
+                            <span class="card-title">Security</span>
+                        </div>
+                        <div class="card-body">
+                            <label class="form-label">Token</label>
+                            <div class="form-text fs-5 mb-2 mt-0">
+                                This token is used to authenticate and verify connections from and to the node
+                            </div>
+                            <input @bind="Form.Token" type="text" class="form-control form-control-solid blur-unless-hover">
+                        </div>
+                    </div>
+                    <div class="card mt-5">
+                        <div class="card-body text-end">
+                            <button class="btn btn-success" type="submit">Save changes</button>
+                        </div>
+                    </div>
+                </SmartForm>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Allocations</span>
+                        <div class="card-toolbar">
+                            <WButton OnClick="DeleteAllAllocations" CssClasses="btn btn-icon btn-danger">
+                                <i class="bx bx-sm bx-trash"></i>
+                            </WButton>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="input-group mb-5">
+                            <input @bind="AllocationStart" type="number" class="form-control"/>
+                            <input @bind="AllocationEnd" type="number" class="form-control"/>
+                            <WButton OnClick="AddAllocations" Text="Add" CssClasses="btn btn-primary"/>
+                        </div>
+                        @if (!Node.Allocations.Any())
+                        {
+                            <div class="fs-4 text-center mt-3">No allocations found</div>
+                        }
+                        else
+                        {
+                            <Table TableItem="ServerAllocation"
+                                   Items="Node.Allocations"
+                                   PageSize="10"
+                                   TableClass="table table-row-bordered table-row-gray-100 align-middle gs-0 gy-3 fs-6"
+                                   TableHeadClass="fw-bold text-muted">
+                                <Column TableItem="ServerAllocation" Field="@(x => x.Port)" Title="" Sortable="true" Filterable="true">
+                                    <Template>
+                                        <span class="fs-6">@(context.Port)</span>
+                                    </Template>
+                                </Column>
+                                <Column TableItem="ServerAllocation" Field="@(x => x.Port)" Title="" Sortable="false" Filterable="false">
+                                    <Template>
+                                        <div class="text-end">
+                                            <WButton OnClick="() => DeleteAllocation(context)" Text="Remove" CssClasses="btn btn-sm btn-danger"/>
+                                        </div>
+                                    </Template>
+                                </Column>
+                                <Pager ShowPageNumber="true" ShowTotalCount="true" AlwaysShow="true"/>
+                            </Table>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</LazyLoader>
+
+@code
+{
+    [Parameter]
+    public int Id { get; set; }
+
+    private LazyLoader LazyLoader;
+
+    private ServerNode? Node;
+    private NodeViewForm Form = new();
+
+    private int AllocationStart = 2000;
+    private int AllocationEnd = 3000;
+
+    private Task Load(LazyLoader _)
+    {
+        Node = NodeRepository
+            .Get()
+            .Include(x => x.Allocations)
+            .FirstOrDefault(x => x.Id == Id);
+
+        if (Node != null)
+        {
+            Form = Mapper.Map<NodeViewForm>(Node);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private async Task AddAllocations()
+    {
+        int skipped = 0;
+        int added = 0;
+
+        for (int i = AllocationStart; i < AllocationEnd; i++)
+        {
+            if (Node!.Allocations.Any(x => x.Port == i))
+                skipped++;
+            else
+            {
+                Node.Allocations.Add(new()
+                {
+                    Port = i
+                });
+
+                added++;
+            }
+        }
+
+        NodeRepository.Update(Node!);
+
+        await ToastService.Success($"Added {added} allocations and skipped {skipped} ports due to existing allocations");
+        await LazyLoader.Reload();
+    }
+
+    private async Task DeleteAllocation(ServerAllocation allocation)
+    {
+        if (ServerRepository
+            .Get()
+            .Any(x => x.AdditionalAllocations.Any(y => y.Id == allocation.Id)))
+            throw new DisplayException("A server is using this allocation. Delete the server in order to delete this allocation");
+
+        AllocationRepository.Delete(allocation);
+
+        await ToastService.Success("Successfully deleted allocation");
+        await LazyLoader.Reload();
+    }
+
+    private async Task DeleteAllAllocations()
+    {
+        if (!await AlertService.YesNo("Do you really want to delete all allocations?", "Yes", "No"))
+            return;
+
+        foreach (var allocation in Node!.Allocations.ToArray()) // To array in order to prevent collection modified exception
+        {
+            if (ServerRepository
+                .Get()
+                .Any(x => x.AdditionalAllocations.Any(y => y.Id == allocation.Id)))
+            {
+                await ToastService.Danger($"Unable to delete allocation with port {allocation.Port} due to a server using this allocation");
+                continue;
+            }
+
+            AllocationRepository.Delete(allocation);
+        }
+
+        await ToastService.Success("Successfully deleted allocations");
+        await LazyLoader.Reload();
+    }
+
+    private async Task SubmitNode()
+    {
+        Node = Mapper.Map(Node!, Form);
+
+        NodeRepository.Update(Node);
+
+        await ToastService.Success("Successfully saved changes");
+    }
+}

@@ -47,7 +47,7 @@ public class ServiceAdminService
         var finishedService = serviceRepo.Add(service);
 
         // Call the action for the logic behind the service type
-        await impl.Actions.Create(scope.ServiceProvider, finishedService);
+        await impl.Actions.Create(scope.ServiceProvider, finishedService); //TODO: Handle errors when creating
 
         return finishedService;
     }

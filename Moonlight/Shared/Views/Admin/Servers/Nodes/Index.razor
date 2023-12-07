@@ -1,0 +1,113 @@
+@page "/admin/servers/nodes"
+
+@using Moonlight.App.Extensions.Attributes
+@using Moonlight.App.Models.Enums
+@using Moonlight.App.Database.Entities.Servers
+@using Moonlight.App.Repositories
+@using Microsoft.EntityFrameworkCore
+@using Moonlight.App.Services.Servers.Nodes
+
+@attribute [RequirePermission(Permission.AdminServersNodes)]
+
+@inject Repository<ServerNode> NodeRepository
+@inject Repository<Server> ServerRepository
+@inject NodeService NodeService
+@inject ToastService ToastService
+
+<AdminServersNavigation Index="2"/>
+
+<div class="card mt-5 mb-5">
+    <div class="card-header border-0">
+        <h3 class="card-title">Nodes</h3>
+        <div class="card-toolbar">
+            <div class="btn-group">
+                <a class="btn btn-sm btn-success" href="/admin/servers/nodes/new">
+                    <i class="bx bx-sm bx-plus me-3"></i>
+                    New
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<LazyLoader @ref="LazyLoader" Load="Load" ShowAsCard="true">
+    <div class="row g-5">
+        @foreach (var node in AllNodes)
+        {
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">@(node.Name)</span>
+                        <div class="card-toolbar">
+                            <a href="/admin/servers/nodes/view/@(node.Id)" class="btn btn-icon btn-secondary me-3">
+                                <i class="bx bx-sm bx-info-circle"></i>
+                            </a>
+                            <a href="/admin/servers/nodes/view/@(node.Id)" class="btn btn-icon btn-secondary me-3">
+                                <i class="bx bx-sm bx-cog"></i>
+                            </a>
+                            <WButton OnClick="() => BootNode(node)" CssClasses="btn btn-icon btn-primary me-3">
+                                <i class="bx bx-sm bx-chip"></i>
+                            </WButton>
+                            <WButton OnClick="() => DeleteNode(node)" CssClasses="btn btn-icon btn-danger">
+                                <i class="bx bx-sm bx-trash"></i>
+                            </WButton>
+                        </div>
+                    </div>
+                    <div class="card-body fs-5">
+                        <div class="d-flex flex-stack">
+                            <span class="text-gray-700 fw-semibold me-2">FQDN: <span class="fw-bold text-body">@(node.Fqdn)</span></span>
+                        </div>
+                        <div class="separator separator-dashed my-3"></div>
+                        <div class="d-flex flex-stack">
+                            <span class="text-gray-700 fw-semibold me-2">Status: <span class="text-danger">Offline</span></span>
+                        </div>
+                        <div class="separator separator-dashed my-3"></div>
+                        <div class="d-flex flex-stack">
+                            <span class="text-gray-700 fw-semibold me-2">Version: <span class="text-info">v2</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</LazyLoader>
+
+@code
+{
+    private ServerNode[] AllNodes;
+    private LazyLoader LazyLoader;
+
+    private Task Load(LazyLoader arg)
+    {
+        AllNodes = NodeRepository
+            .Get()
+            .ToArray();
+
+        return Task.CompletedTask;
+    }
+
+    private async Task DeleteNode(ServerNode node)
+    {
+        if (ServerRepository.Get().Any(x => x.Node.Id == node.Id))
+            throw new DisplayException("Unable to delete node as servers are assigned to it");
+
+        var hasAllocations = NodeRepository
+            .Get()
+            .Include(x => x.Allocations)
+            .First(x => x.Id == node.Id).Allocations
+            .Any();
+
+        if (hasAllocations)
+            throw new DisplayException("Unable to delete node as it has allocations assigned to it");
+
+        NodeRepository.Delete(node);
+
+        await ToastService.Success("Successfully deleted node");
+        await LazyLoader.Reload();
+    }
+
+    private async Task BootNode(ServerNode node)
+    {
+        await NodeService.Boot.Boot(node);
+    }
+}

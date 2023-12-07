@@ -1,5 +1,6 @@
 using BlazorTable;
 using Moonlight.App.Actions.Dummy;
+using Moonlight.App.Actions.Servers;
 using Moonlight.App.Database;
 using Moonlight.App.Database.Enums;
 using Moonlight.App.Extensions;
@@ -10,6 +11,7 @@ using Moonlight.App.Services;
 using Moonlight.App.Services.Background;
 using Moonlight.App.Services.Community;
 using Moonlight.App.Services.Interop;
+using Moonlight.App.Services.Servers.Nodes;
 using Moonlight.App.Services.ServiceManage;
 using Moonlight.App.Services.Store;
 using Moonlight.App.Services.Ticketing;
@@ -45,6 +47,9 @@ await pluginService.RunPreInit();
 
 builder.Services.AddDbContext<DataContext>();
 
+// Helpers
+builder.Services.AddScoped<NodeRequestHelper>();
+
 // Repositories
 builder.Services.AddScoped(typeof(Repository<>));
 
@@ -57,6 +62,7 @@ builder.Services.AddScoped<CookieService>();
 builder.Services.AddScoped<ToastService>();
 builder.Services.AddScoped<ModalService>();
 builder.Services.AddScoped<AlertService>();
+builder.Services.AddScoped<FileDownloadService>();
 
 // Services / Store
 builder.Services.AddScoped<StoreService>();
@@ -88,6 +94,10 @@ builder.Services.AddSingleton<ServiceManageService>();
 builder.Services.AddScoped<TicketService>();
 builder.Services.AddScoped<TicketChatService>();
 builder.Services.AddScoped<TicketCreateService>();
+
+// Services / Servers / Nodes
+builder.Services.AddScoped<NodeService>();
+builder.Services.AddScoped<NodeBootService>();
 
 // Services
 builder.Services.AddScoped<IdentityService>();
@@ -126,8 +136,9 @@ app.Services.GetRequiredService<AutoMailSendService>();
 
 var serviceService = app.Services.GetRequiredService<ServiceDefinitionService>();
 
-serviceService.Register<DummyServiceDefinition>(ServiceType.Server);
+//serviceService.Register<DummyServiceDefinition>(ServiceType.Server);
+serviceService.Register<ServerServiceDefinition>(ServiceType.Server);
 
-await pluginService.RunPrePost(app);
+await pluginService.RunPostInit(app);
 
 app.Run();

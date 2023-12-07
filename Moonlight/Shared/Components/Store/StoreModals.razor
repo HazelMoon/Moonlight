@@ -264,7 +264,11 @@
         get => AddProductForm.Type;
     }
 
-    public Task AddProductShow => AddProductModal.Show();
+    public async Task AddProductShow()
+    {
+        await AddProductModal.Show();
+        AddProductServiceType = ServiceType.Server;
+    }
 
     private async Task AddProductSubmit()
     {
@@ -320,6 +324,8 @@
         EditProductConfig = StoreService.Admin.GetProductConfig(product);
 
         EditProductForm = Mapper.Map<EditProductForm>(EditProduct);
+        EditProductServiceType = EditProduct.Type;
+        
         await EditProductModal.Show();
     }
 
