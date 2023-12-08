@@ -10,6 +10,7 @@ public class NodeService
     private readonly IServiceProvider ServiceProvider;
 
     public NodeBootService Boot => ServiceProvider.GetRequiredService<NodeBootService>();
+    public NodeNetworkingService Networking => ServiceProvider.GetRequiredService<NodeNetworkingService>();
 
     public NodeService(IServiceProvider serviceProvider)
     {

@@ -99,6 +99,7 @@ builder.Services.AddScoped<TicketCreateService>();
 // Services / Servers / Nodes
 builder.Services.AddSingleton<NodeService>();
 builder.Services.AddSingleton<NodeBootService>();
+builder.Services.AddSingleton<NodeNetworkingService>();
 
 // Services / Servers
 builder.Services.AddSingleton<ServerService>();
@@ -128,6 +129,7 @@ builder.Logging.AddConfiguration(config.Build());
 var app = builder.Build();
 moonlightService.Application = app;
 
+app.UseWebSockets();
 app.UseStaticFiles();
 app.UseRouting();
 
