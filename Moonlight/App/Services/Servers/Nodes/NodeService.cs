@@ -20,10 +20,7 @@ public class NodeService
     {
         using var client = node.CreateHttpClient();
         
-        var status = await client.SendHandled<Status, NodeException>(HttpMethod.Get, "status", headers: headers =>
-        {
-            headers.Add("Authorization", node.Token);
-        });
+        var status = await client.SendHandled<Status, NodeException>(HttpMethod.Get, "status");
 
         return status;
     }

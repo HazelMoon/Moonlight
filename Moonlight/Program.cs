@@ -11,6 +11,7 @@ using Moonlight.App.Services;
 using Moonlight.App.Services.Background;
 using Moonlight.App.Services.Community;
 using Moonlight.App.Services.Interop;
+using Moonlight.App.Services.Servers;
 using Moonlight.App.Services.Servers.Nodes;
 using Moonlight.App.Services.ServiceManage;
 using Moonlight.App.Services.Store;
@@ -96,8 +97,11 @@ builder.Services.AddScoped<TicketChatService>();
 builder.Services.AddScoped<TicketCreateService>();
 
 // Services / Servers / Nodes
-builder.Services.AddScoped<NodeService>();
-builder.Services.AddScoped<NodeBootService>();
+builder.Services.AddSingleton<NodeService>();
+builder.Services.AddSingleton<NodeBootService>();
+
+// Services / Servers
+builder.Services.AddSingleton<ServerService>();
 
 // Services
 builder.Services.AddScoped<IdentityService>();

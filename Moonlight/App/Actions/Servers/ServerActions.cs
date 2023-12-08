@@ -4,13 +4,14 @@ using Moonlight.App.Database.Entities.Store;
 using Moonlight.App.Exceptions;
 using Moonlight.App.Models.Abstractions.Services;
 using Moonlight.App.Repositories;
+using Moonlight.App.Services.Servers;
 using Newtonsoft.Json;
 
 namespace Moonlight.App.Actions.Servers;
 
 public class ServerActions : ServiceActions
 {
-    public override Task Create(IServiceProvider provider, Service service)
+    public override async Task Create(IServiceProvider provider, Service service)
     {
         var serverRepo = provider.GetRequiredService<Repository<Server>>();
         var imageRepo = provider.GetRequiredService<Repository<ServerImage>>();
@@ -58,7 +59,9 @@ public class ServerActions : ServiceActions
             AdditionalAllocations = additionalAllocations.ToList(),
             Image = image,
             OverrideStartupCommand = null,
-            DockerImageIndex = image.DockerImages.IndexOf(image.DockerImages.Last()),
+            DockerImageIndex = image.DockerImages.IndexOf( // This selects the default docker image, if there is none it will pick the last
+                image.DockerImages.FirstOrDefault(x => x.IsDefault) 
+                ?? image.DockerImages.Last()),
             Variables = image.Variables.Select(x => new ServerVariable()
             {
                 Key = x.Key,
@@ -67,10 +70,11 @@ public class ServerActions : ServiceActions
         };
 
         serverRepo.Add(server);
-        
+
+        var serverService = provider.GetRequiredService<ServerService>();
+        await serverService.Sync(server);
+
         // Trigger reinstall here
-        
-        return Task.CompletedTask;
     }
 
     public override Task Update(IServiceProvider provider, Service service)
