@@ -196,7 +196,7 @@
     {
         if (ServerRepository
             .Get()
-            .Any(x => x.AdditionalAllocations.Any(y => y.Id == allocation.Id)))
+            .Any(x => x.Allocations.Any(y => y.Id == allocation.Id)))
             throw new DisplayException("A server is using this allocation. Delete the server in order to delete this allocation");
 
         AllocationRepository.Delete(allocation);
@@ -214,7 +214,7 @@
         {
             if (ServerRepository
                 .Get()
-                .Any(x => x.AdditionalAllocations.Any(y => y.Id == allocation.Id)))
+                .Any(x => x.Allocations.Any(y => y.Id == allocation.Id)))
             {
                 await ToastService.Danger($"Unable to delete allocation with port {allocation.Port} due to a server using this allocation");
                 continue;

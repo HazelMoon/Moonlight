@@ -48,7 +48,7 @@ public class PostService
 
         var finishedPost = PostRepository.Add(post);
 
-        await Events.OnPostCreated.InvokeAsync(finishedPost);
+        await Events.OnPostCreated.Invoke(finishedPost);
         
         return finishedPost;
     }
@@ -67,7 +67,7 @@ public class PostService
         
         PostRepository.Update(post);
 
-        await Events.OnPostUpdated.InvokeAsync(post);
+        await Events.OnPostUpdated.Invoke(post);
     }
 
     public async Task Delete(Post post)
@@ -97,7 +97,7 @@ public class PostService
         
         // Now delete the post itself
         PostRepository.Delete(post);
-        await Events.OnPostDeleted.InvokeAsync(post);
+        await Events.OnPostDeleted.Invoke(post);
     }
 
     // Comments
@@ -125,7 +125,7 @@ public class PostService
         post.Comments.Add(comment);
         PostRepository.Update(post);
 
-        await Events.OnPostCommentCreated.InvokeAsync(comment);
+        await Events.OnPostCommentCreated.Invoke(comment);
 
         return comment;
     }
@@ -143,7 +143,7 @@ public class PostService
         PostRepository.Update(postWithComments);
         PostCommentRepository.Delete(commentToRemove);
 
-        await Events.OnPostCommentCreated.InvokeAsync(commentToRemove);
+        await Events.OnPostCommentCreated.Invoke(commentToRemove);
     }
     
     // Other
@@ -173,7 +173,7 @@ public class PostService
             
             PostRepository.Update(postWithLikes);
 
-            await Events.OnPostLiked.InvokeAsync(postWithLikes);
+            await Events.OnPostLiked.Invoke(postWithLikes);
         }
     }
     

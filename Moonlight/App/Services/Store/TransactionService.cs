@@ -36,7 +36,7 @@ public class TransactionService
         
         UserRepository.Update(user);
 
-        await Events.OnTransactionCreated.InvokeAsync(new()
+        await Events.OnTransactionCreated.Invoke(new()
         {
             Transaction = transaction,
             User = user

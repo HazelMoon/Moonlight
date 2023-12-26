@@ -233,7 +233,7 @@
 
     #region Events
 
-    private async void OnTicketMessage(object? sender, TicketMessageEventArgs message)
+    private async Task OnTicketMessage(TicketMessageEventArgs message)
     {
         if(!message.TicketMessage.IsSupport) // Only update if support has sent messages as the pending tickets depend on that
             return;
@@ -242,13 +242,13 @@
         await TicketLazyLoader.Reload();
     }
 
-    private async void OnTicketUpdated(object? o, Ticket e)
+    private async Task OnTicketUpdated(Ticket e)
     {
         await StatisticsLazyLoader.Reload();
         await TicketLazyLoader.Reload();
     }
 
-    private async void OnTicketCreated(object? o, Ticket e)
+    private async Task OnTicketCreated(Ticket e)
     {
         await StatisticsLazyLoader.Reload();
         await TicketLazyLoader.Reload();

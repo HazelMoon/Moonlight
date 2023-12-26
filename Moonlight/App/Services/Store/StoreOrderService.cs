@@ -143,7 +143,7 @@ public class StoreOrderService
         var service = await serviceService.Admin.Create(u, p,
             service => { service.RenewAt = DateTime.UtcNow.AddDays(duration); });
 
-        await Events.OnServiceOrdered.InvokeAsync(service);
+        await Events.OnServiceOrdered.Invoke(service);
         
         return service;
     }

@@ -3,6 +3,7 @@ using Moonlight.App.Database.Entities.Servers;
 using Moonlight.App.Exceptions;
 using Moonlight.App.Exceptions.Server;
 using Moonlight.App.Extensions;
+using Moonlight.App.Helpers;
 using Moonlight.App.Http.Resources.Servers;
 using Moonlight.App.Repositories;
 
@@ -17,6 +18,32 @@ public class NodeBootService
     {
         NodeService = nodeService;
         ServiceProvider = serviceProvider;
+    }
+    
+    public Task BootAll() // This method will boot all nodes async
+    {
+        Logger.Info("Booting all nodes");
+        
+        using var scope = ServiceProvider.CreateScope();
+        var nodeRepo = scope.ServiceProvider.GetRequiredService<Repository<ServerNode>>();
+        
+        foreach (var node in nodeRepo.Get().ToArray())
+        {
+            Task.Run(async () =>
+            {
+                try
+                {
+                    await Boot(node);
+                }
+                catch (Exception e)
+                {
+                    Logger.Fatal("Unhandled error while booting node in BootAll");
+                    Logger.Fatal(e);
+                }
+            });
+        }
+        
+        return Task.CompletedTask;
     }
 
     public async Task Boot(ServerNode node)
@@ -37,7 +64,7 @@ public class NodeBootService
             .Where(x => x.Node.Id == node.Id)
             .Include(x => x.Variables)
             .Include(x => x.MainAllocation)
-            .Include(x => x.AdditionalAllocations)
+            .Include(x => x.Allocations)
             .Include(x => x.Image)
             .ThenInclude(x => x.DockerImages)
             .Include(x => x.Image)

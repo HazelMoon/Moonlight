@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Moonlight.App.Database.Entities.Servers;
 using Moonlight.App.Database.Entities.Store;
 using Moonlight.App.Exceptions;
+using Moonlight.App.Helpers;
 using Moonlight.App.Models.Abstractions.Services;
 using Moonlight.App.Repositories;
 using Moonlight.App.Services.Servers;
@@ -34,20 +35,17 @@ public class ServerActions : ServiceActions
             .Get()
             .First();
         
-        var freeAllocations = allocationRepo
+        var allocations = allocationRepo
             .Get()
             .FromSqlRaw(
                 $"SELECT * FROM `ServerAllocations` WHERE ServerId IS NULL AND ServerNodeId={node.Id} LIMIT {image.AllocationsNeeded}")
             .ToArray();
+        
+        Logger.Debug(allocations.Length.ToString());
 
-        if (freeAllocations.Length < image.AllocationsNeeded)
+        if (allocations.Length < image.AllocationsNeeded)
             throw new DisplayException("Not enough free allocations on the node found");
-
-        var mainAllocation = freeAllocations.First();
-        var additionalAllocations = freeAllocations
-            .Where(x => x.Id != mainAllocation.Id)
-            .ToArray();
-
+        
         var server = new Server()
         {
             Service = service,
@@ -55,8 +53,7 @@ public class ServerActions : ServiceActions
             Memory = config.Memory,
             Disk = config.Disk,
             Node = node,
-            MainAllocation = mainAllocation,
-            AdditionalAllocations = additionalAllocations.ToList(),
+            MainAllocation = allocations.First(),
             Image = image,
             OverrideStartupCommand = null,
             DockerImageIndex = image.DockerImages.IndexOf( // This selects the default docker image, if there is none it will pick the last
@@ -68,6 +65,9 @@ public class ServerActions : ServiceActions
                 Value = x.Value
             }).ToList()
         };
+
+        foreach (var allocation in allocations)
+            server.Allocations.Add(allocation);
 
         serverRepo.Add(server);
 
@@ -84,6 +84,26 @@ public class ServerActions : ServiceActions
 
     public override Task Delete(IServiceProvider provider, Service service)
     {
+        var serverRepo = provider.GetRequiredService<Repository<Server>>();
+        var serverVariableRepo = provider.GetRequiredService<Repository<ServerVariable>>();
+
+        var server = serverRepo
+            .Get()
+            .Include(x => x.Variables)
+            .Include(x => x.MainAllocation)
+            .First(x => x.Service.Id == service.Id);
+
+        var variables = server.Variables.ToArray();
+        
+        server.Variables.Clear();
+        
+        serverRepo.Update(server);
+
+        foreach (var variable in variables)
+            serverVariableRepo.Delete(variable);
+        
+        serverRepo.Delete(server);
+        
         return Task.CompletedTask;
     }
 }

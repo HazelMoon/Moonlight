@@ -10,14 +10,18 @@ public class ServerServiceDefinition : ServiceDefinition
     public override Type ConfigType => typeof(ServerConfig);
     public override Task BuildUserView(ServiceViewContext context)
     {
-        context.Layout = ComponentHelper.FromType<ServerUserLayout>();
+        context.Layout = typeof(ServerUserLayout);
+
+        context.AddPage<UserPages.Overview>("Overview", "/", "bx bx-sm bxs-dashboard");
+        context.AddPage<UserPages.Console>("Console", "/console", "bx bx-sm bxs-terminal");
+        context.AddPage<UserPages.Reset>("Reset", "/reset", "bx bx-sm bx-revision");
         
         return Task.CompletedTask;
     }
 
     public override Task BuildAdminView(ServiceViewContext context)
     {
-        context.Layout = ComponentHelper.FromType<ServerAdminLayout>();
+        context.Layout = typeof(ServerAdminLayout);
         
         return Task.CompletedTask;
     }

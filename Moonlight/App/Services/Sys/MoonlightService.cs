@@ -19,7 +19,7 @@ public class MoonlightService // This service can be used to perform strictly pa
         Logger.Info("Restarting moonlight");
         
         // Notify all users that this instance will restart
-        await Events.OnMoonlightRestart.InvokeAsync();
+        await Events.OnMoonlightRestart.Invoke();
         await Task.Delay(TimeSpan.FromSeconds(3));
 
         await Application.StopAsync();

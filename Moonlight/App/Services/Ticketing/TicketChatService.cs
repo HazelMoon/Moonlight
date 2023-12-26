@@ -72,7 +72,7 @@ public class TicketChatService
         
         TicketRepository.Update(Ticket);
 
-        await Events.OnTicketUpdated.InvokeAsync(Ticket);
+        await Events.OnTicketUpdated.Invoke(Ticket);
     }
 
     public Task Stop() // Clear cache and stop listeners
@@ -143,7 +143,7 @@ public class TicketChatService
         TicketRepository.Update(t);
         
         // Now emit the events
-        await Events.OnTicketMessage.InvokeAsync(new()
+        await Events.OnTicketMessage.Invoke(new()
         {
             Ticket = t, // We use this reference as it has less data attached to it
             TicketMessage = message
@@ -153,7 +153,7 @@ public class TicketChatService
     #endregion
 
     // Event handlers
-    private async void OnTicketUpdated(object? _, Ticket ticket)
+    private async Task OnTicketUpdated(Ticket ticket)
     {
         if(Ticket.Id != ticket.Id) // Only listen to our ticket
             return;
@@ -166,7 +166,7 @@ public class TicketChatService
             await OnUpdate.Invoke();
     }
     
-    private async void OnTicketMessage(object? _, TicketMessageEventArgs eventArgs)
+    private async Task OnTicketMessage(TicketMessageEventArgs eventArgs)
     {
         if(Ticket.Id != eventArgs.Ticket.Id) // Only listen to our ticket
             return;

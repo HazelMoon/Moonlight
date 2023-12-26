@@ -47,7 +47,7 @@ namespace Moonlight.App.Database.Migrations
 
                     b.HasIndex("AuthorId");
 
-                    b.ToTable("Posts");
+                    b.ToTable("Posts", (string)null);
                 });
 
             modelBuilder.Entity("Moonlight.App.Database.Entities.Community.PostComment", b =>
@@ -78,7 +78,7 @@ namespace Moonlight.App.Database.Migrations
 
                     b.HasIndex("PostId");
 
-                    b.ToTable("PostComments");
+                    b.ToTable("PostComments", (string)null);
                 });
 
             modelBuilder.Entity("Moonlight.App.Database.Entities.Community.PostLike", b =>
@@ -102,7 +102,7 @@ namespace Moonlight.App.Database.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("PostLikes");
+                    b.ToTable("PostLikes", (string)null);
                 });
 
             modelBuilder.Entity("Moonlight.App.Database.Entities.Community.WordFilter", b =>
@@ -117,7 +117,7 @@ namespace Moonlight.App.Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("WordFilters");
+                    b.ToTable("WordFilters", (string)null);
                 });
 
             modelBuilder.Entity("Moonlight.App.Database.Entities.Servers.Server", b =>
@@ -163,7 +163,7 @@ namespace Moonlight.App.Database.Migrations
 
                     b.HasIndex("ServiceId");
 
-                    b.ToTable("Servers");
+                    b.ToTable("Servers", (string)null);
                 });
 
             modelBuilder.Entity("Moonlight.App.Database.Entities.Servers.ServerAllocation", b =>
@@ -187,7 +187,7 @@ namespace Moonlight.App.Database.Migrations
 
                     b.HasIndex("ServerNodeId");
 
-                    b.ToTable("ServerAllocations");
+                    b.ToTable("ServerAllocations", (string)null);
                 });
 
             modelBuilder.Entity("Moonlight.App.Database.Entities.Servers.ServerDockerImage", b =>
@@ -210,7 +210,7 @@ namespace Moonlight.App.Database.Migrations
 
                     b.HasIndex("ServerImageId");
 
-                    b.ToTable("ServerDockerImages");
+                    b.ToTable("ServerDockerImages", (string)null);
                 });
 
             modelBuilder.Entity("Moonlight.App.Database.Entities.Servers.ServerImage", b =>
@@ -262,7 +262,7 @@ namespace Moonlight.App.Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ServerImages");
+                    b.ToTable("ServerImages", (string)null);
                 });
 
             modelBuilder.Entity("Moonlight.App.Database.Entities.Servers.ServerImageVariable", b =>
@@ -286,7 +286,7 @@ namespace Moonlight.App.Database.Migrations
 
                     b.HasIndex("ServerImageId");
 
-                    b.ToTable("ServerImageVariables");
+                    b.ToTable("ServerImageVariables", (string)null);
                 });
 
             modelBuilder.Entity("Moonlight.App.Database.Entities.Servers.ServerNode", b =>
@@ -315,7 +315,7 @@ namespace Moonlight.App.Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ServerNodes");
+                    b.ToTable("ServerNodes", (string)null);
                 });
 
             modelBuilder.Entity("Moonlight.App.Database.Entities.Servers.ServerVariable", b =>
@@ -339,7 +339,7 @@ namespace Moonlight.App.Database.Migrations
 
                     b.HasIndex("ServerId");
 
-                    b.ToTable("ServerVariables");
+                    b.ToTable("ServerVariables", (string)null);
                 });
 
             modelBuilder.Entity("Moonlight.App.Database.Entities.Store.Category", b =>
@@ -362,7 +362,7 @@ namespace Moonlight.App.Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("Moonlight.App.Database.Entities.Store.Coupon", b =>
@@ -383,7 +383,7 @@ namespace Moonlight.App.Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Coupons");
+                    b.ToTable("Coupons", (string)null);
                 });
 
             modelBuilder.Entity("Moonlight.App.Database.Entities.Store.CouponUse", b =>
@@ -404,7 +404,7 @@ namespace Moonlight.App.Database.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("CouponUses");
+                    b.ToTable("CouponUses", (string)null);
                 });
 
             modelBuilder.Entity("Moonlight.App.Database.Entities.Store.GiftCode", b =>
@@ -425,7 +425,7 @@ namespace Moonlight.App.Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("GiftCodes");
+                    b.ToTable("GiftCodes", (string)null);
                 });
 
             modelBuilder.Entity("Moonlight.App.Database.Entities.Store.GiftCodeUse", b =>
@@ -446,7 +446,7 @@ namespace Moonlight.App.Database.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("GiftCodeUses");
+                    b.ToTable("GiftCodeUses", (string)null);
                 });
 
             modelBuilder.Entity("Moonlight.App.Database.Entities.Store.Product", b =>
@@ -496,7 +496,7 @@ namespace Moonlight.App.Database.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("Products");
+                    b.ToTable("Products", (string)null);
                 });
 
             modelBuilder.Entity("Moonlight.App.Database.Entities.Store.Service", b =>
@@ -532,7 +532,7 @@ namespace Moonlight.App.Database.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("Services");
+                    b.ToTable("Services", (string)null);
                 });
 
             modelBuilder.Entity("Moonlight.App.Database.Entities.Store.ServiceShare", b =>
@@ -553,7 +553,7 @@ namespace Moonlight.App.Database.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ServiceShares");
+                    b.ToTable("ServiceShares", (string)null);
                 });
 
             modelBuilder.Entity("Moonlight.App.Database.Entities.Store.Transaction", b =>
@@ -576,7 +576,7 @@ namespace Moonlight.App.Database.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Transaction");
+                    b.ToTable("Transaction", (string)null);
                 });
 
             modelBuilder.Entity("Moonlight.App.Database.Entities.Tickets.Ticket", b =>
@@ -618,7 +618,7 @@ namespace Moonlight.App.Database.Migrations
 
                     b.HasIndex("ServiceId");
 
-                    b.ToTable("Tickets");
+                    b.ToTable("Tickets", (string)null);
                 });
 
             modelBuilder.Entity("Moonlight.App.Database.Entities.Tickets.TicketMessage", b =>
@@ -652,7 +652,7 @@ namespace Moonlight.App.Database.Migrations
 
                     b.HasIndex("TicketId");
 
-                    b.ToTable("TicketMessages");
+                    b.ToTable("TicketMessages", (string)null);
                 });
 
             modelBuilder.Entity("Moonlight.App.Database.Entities.User", b =>
@@ -697,7 +697,7 @@ namespace Moonlight.App.Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("Moonlight.App.Database.Entities.Community.Post", b =>

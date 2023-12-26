@@ -25,15 +25,7 @@
         }
         else
         {
-            <CascadingValue Name="Service" Value="Service">
-                <CascadingValue Name="Implementation" Value="Definition">
-                    <CascadingValue Name="Route" Value="Route">
-                        <CascadingValue Name="ViewContext" Value="ViewContext">
-                            @ViewContext.Layout
-                        </CascadingValue>
-                    </CascadingValue>
-                </CascadingValue>
-            </CascadingValue>
+            @Layout
         }
     }
 </LazyLoader>
@@ -51,6 +43,8 @@
     private ServiceViewContext ViewContext;
 
     private bool NeedsRenewal = false;
+
+    private RenderFragment Layout;
 
     private async Task Load(LazyLoader lazyLoader)
     {
@@ -94,5 +88,13 @@
 
         await Definition.BuildUserView(ViewContext);
         await PluginService.BuildUserServiceView(ViewContext);
+
+        Layout = ComponentHelper.FromType(ViewContext.Layout, parameters =>
+        {
+            parameters.Add("Service", Service);
+            parameters.Add("Implementation", Definition);
+            parameters.Add("Route", Route!);
+            parameters.Add("ViewContext", ViewContext);
+        });
     }
 }

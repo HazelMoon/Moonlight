@@ -18,15 +18,10 @@ public static class ServerExtensions
             StopCommand = server.Image.StopCommand
         };
 
-        config.Allocations = server.AdditionalAllocations.Select(x => new ServerConfiguration.AllocationData()
+        config.Allocations = server.Allocations.Select(x => new ServerConfiguration.AllocationData()
         {
             Port = x.Port
         }).ToList();
-        
-        config.Allocations.Add(new()
-        {
-            Port = server.MainAllocation.Port
-        });
 
         config.Limits = new()
         {

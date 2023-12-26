@@ -68,12 +68,12 @@ public class ServersController : Controller
     [Route("ws")]
     public async Task Websocket()
     {
-        await RequestHelper.UnpackNode(this);
+        var node = await RequestHelper.UnpackNode(this);
 
         if (!Request.HttpContext.WebSockets.IsWebSocketRequest)
             throw new BadRequestException("Only websocket connections are allowed to use this endpoint");
 
         var websocket = await Request.HttpContext.WebSockets.AcceptWebSocketAsync();
-        await NodeService.Networking.HandleIncomingWebsocket(websocket);
+        await NodeService.Networking.HandleIncomingWebsocket(websocket, node);
     }
 }

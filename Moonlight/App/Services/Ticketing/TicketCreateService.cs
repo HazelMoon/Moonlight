@@ -34,7 +34,7 @@ public class TicketCreateService
 
         var finalTicket = TicketRepository.Add(ticket);
 
-        await Events.OnTicketCreated.InvokeAsync(finalTicket);
+        await Events.OnTicketCreated.Invoke(finalTicket);
         
         return finalTicket;
     }

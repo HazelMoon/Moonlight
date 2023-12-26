@@ -125,7 +125,7 @@ else
             }
         };
 
-        Events.OnMoonlightRestart += async (_, _) =>
+        Events.OnMoonlightRestart += async Task () =>
         {
             RestartLock = true;
             await InvokeAsync(StateHasChanged);

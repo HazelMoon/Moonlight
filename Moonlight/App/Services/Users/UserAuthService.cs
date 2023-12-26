@@ -54,7 +54,7 @@ public class UserAuthService
 
         var result = UserRepository.Add(user);
 
-        await Events.OnUserRegistered.InvokeAsync(result);
+        await Events.OnUserRegistered.Invoke(result);
 
         return result;
     }
@@ -65,7 +65,7 @@ public class UserAuthService
         user.TokenValidTimestamp = DateTime.UtcNow;
         UserRepository.Update(user);
 
-        await Events.OnUserPasswordChanged.InvokeAsync(user);
+        await Events.OnUserPasswordChanged.Invoke(user);
     }
 
     public Task SeedTotp(User user)
@@ -90,7 +90,7 @@ public class UserAuthService
 
         UserRepository.Update(user);
 
-        await Events.OnUserTotpSet.InvokeAsync(user);
+        await Events.OnUserTotpSet.Invoke(user);
     }
 
     // Mails

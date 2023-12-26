@@ -1,0 +1,113 @@
+@using Moonlight.App.Database.Entities.Store
+@using Moonlight.App.Services
+@using Moonlight.App.Database.Entities.Servers
+
+@inject ConfigService ConfigService
+
+<div class="card card-body">
+    <div class="row ps-2 pe-2">
+        <div class="col-md-3">
+            <div class="d-flex align-items-center mb-2">
+                <i class="bx bx-md bx-chip text-info me-1"></i>
+                <span class="fs-3 fw-bold text-gray-900 me-2">
+                    @(Math.Round(Server.Cpu / 100D, 2))
+                </span>
+            </div>
+            <span class="fs-6 fw-semibold text-gray-800">vCores</span>
+        </div>
+        <div class="col-md-3">
+            <div class="d-flex align-items-center mb-2">
+                <i class="bx bx-md bx-microchip text-info me-1"></i>
+                <span class="fs-3 fw-bold text-gray-900 me-2">
+                    @{
+                        var memorySize = ByteSizeValue.FromMegaBytes(Server.Memory);
+                    }
+
+                    @if (memorySize.GigaBytes < 0)
+                    {
+                        <span>@memorySize.MegaBytes MB</span>
+                    }
+                    else
+                    {
+                        <span>@memorySize.GigaBytes GB</span>
+                    }
+                </span>
+            </div>
+            <span class="fs-6 fw-semibold text-gray-800">Memory</span>
+        </div>
+        <div class="col-md-3">
+            <div class="d-flex align-items-center mb-2">
+                <i class="bx bx-md bx-hdd text-info me-1"></i>
+                <span class="fs-3 fw-bold text-gray-900 me-2">
+                    @{
+                        var diskSize = ByteSizeValue.FromMegaBytes(Server.Disk);
+                    }
+
+                    @if (diskSize.GigaBytes < 0)
+                    {
+                        <span>@diskSize.MegaBytes MB</span>
+                    }
+                    else
+                    {
+                        <span>@diskSize.GigaBytes GB</span>
+                    }
+                </span>
+            </div>
+            <span class="fs-6 fw-semibold text-gray-800">Disk Space</span>
+        </div>
+        <div class="col-md-3">
+            <div class="d-flex align-items-center mb-2">
+                <i class="bx bx-md bx-wallet text-info me-1"></i>
+                <span class="fs-3 fw-bold text-gray-900 me-2">
+                    @(Service.Product.Price) @(ConfigService.Get().Store.Currency) / @(Service.Product.Duration) days
+                </span>
+            </div>
+            <span class="fs-6 fw-semibold text-gray-800">Price</span>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">
+                    <i class="bx bx-sm bx-current-location text-info me-2"></i>
+                    Location
+                </span>
+            </div>
+            <div class="card-body">
+                @* TODO: Load location via ip locate here *@
+                <div class="row fs-5 g-3">
+                    <div class="col-md-6">
+                        <div class="d-flex flex-column">
+                            <span class="text-muted">City</span>
+                            <span class="fw-bold">Nuremberg</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex flex-column">
+                            <span class="text-muted">Region</span>
+                            <span class="fw-bold">Bavaria</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex flex-column">
+                            <span class="text-muted">Country</span>
+                            <span class="fw-bold">Germany</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code
+{
+    [CascadingParameter]
+    public Service Service { get; set; }
+
+    [CascadingParameter]
+    public Server Server { get; set; }
+}

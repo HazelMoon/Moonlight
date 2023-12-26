@@ -64,6 +64,7 @@ builder.Services.AddScoped<ToastService>();
 builder.Services.AddScoped<ModalService>();
 builder.Services.AddScoped<AlertService>();
 builder.Services.AddScoped<FileDownloadService>();
+builder.Services.AddScoped<ClipboardService>();
 
 // Services / Store
 builder.Services.AddScoped<StoreService>();
@@ -103,6 +104,9 @@ builder.Services.AddSingleton<NodeNetworkingService>();
 
 // Services / Servers
 builder.Services.AddSingleton<ServerService>();
+builder.Services.AddSingleton<ServerMetaService>();
+builder.Services.AddSingleton<ServerPowerService>();
+builder.Services.AddSingleton<ServerConsoleService>();
 
 // Services
 builder.Services.AddScoped<IdentityService>();
@@ -146,5 +150,13 @@ var serviceService = app.Services.GetRequiredService<ServiceDefinitionService>()
 serviceService.Register<ServerServiceDefinition>(ServiceType.Server);
 
 await pluginService.RunPostInit(app);
+
+Task.Run(async () =>
+{
+    await Task.Delay(TimeSpan.FromSeconds(3));
+
+    var nodeService = app.Services.GetRequiredService<NodeService>();
+    await nodeService.Boot.BootAll();
+});
 
 app.Run();

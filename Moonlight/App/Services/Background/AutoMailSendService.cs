@@ -18,7 +18,7 @@ public class AutoMailSendService // This service is responsible for sending mail
         Events.OnTransactionCreated += OnTransactionCreated;
     }
 
-    private async void OnTransactionCreated(object? sender, TransactionCreatedEventArgs eventArgs)
+    private async Task OnTransactionCreated(TransactionCreatedEventArgs eventArgs)
     {
         await MailService.Send(
             eventArgs.User,
@@ -29,7 +29,7 @@ public class AutoMailSendService // This service is responsible for sending mail
         );
     }
 
-    private async void OnServiceOrdered(object? _, Service service)
+    private async Task OnServiceOrdered(Service service)
     {
         await MailService.Send(
             service.Owner,
@@ -41,7 +41,7 @@ public class AutoMailSendService // This service is responsible for sending mail
         );
     }
 
-    private async void OnUserRegistered(object? _, User user)
+    private async Task OnUserRegistered(User user)
     {
         await MailService.Send(
             user,
