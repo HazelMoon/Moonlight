@@ -59,8 +59,6 @@ public class NodeNetworkingService
 
             if (data is ServerConsoleMessage serverConsoleMessage)
             {
-                Logger.Debug(serverConsoleMessage.Message);
-                
                 var serverService = ServiceProvider.GetRequiredService<ServerService>();
 
                 // Load meta

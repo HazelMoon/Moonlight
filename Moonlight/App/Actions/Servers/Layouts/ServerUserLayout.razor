@@ -46,7 +46,7 @@
                                     color = "danger";
                                     break;
 
-                                case ServerState.Running:
+                                case ServerState.Online:
                                     color = "success";
                                     break;
 
@@ -188,7 +188,7 @@
 
     private Server Server;
     private ServerMeta Meta;
-    private CancellationTokenSource ConsoleSubscribeCancel = new();
+    private CancellationTokenSource BackgroundCancel = new();
 
     private Terminal? InstallTerminal;
     private bool IsInstalling = false;
@@ -246,10 +246,20 @@
     // subscription so every 10 minutes should ensure we are subscribed
         Task.Run(async () =>
         {
-            while (!ConsoleSubscribeCancel.IsCancellationRequested)
+            while (!BackgroundCancel.IsCancellationRequested)
             {
                 await Task.Delay(TimeSpan.FromMinutes(10));
                 await ServerService.Console.Subscribe(Server);
+            }
+        });
+        
+        // In order to update the timer correctly, we are calling a re
+        Task.Run(async () =>
+        {
+            while (!BackgroundCancel.IsCancellationRequested)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(1));
+                await InvokeAsync(StateHasChanged);
             }
         });
     }
@@ -268,6 +278,6 @@
 
     public void Dispose()
     {
-        ConsoleSubscribeCancel.Cancel();
+        BackgroundCancel.Cancel();
     }
 }

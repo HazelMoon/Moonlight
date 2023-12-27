@@ -11,11 +11,20 @@ public static class ServerExtensions
 
         config.Id = server.Id;
         config.StartupCommand = server.OverrideStartupCommand ?? server.Image.StartupCommand;
+
+        ServerDockerImage dockerImage;
+
+        // This prevents a invalid docker image index from breaking things
+        if (server.Image.DockerImages.Count > server.DockerImageIndex)
+            dockerImage = server.Image.DockerImages[server.DockerImageIndex];
+        else
+            dockerImage = server.Image.DockerImages.Last();
         
         config.Image = new()
         {
-            DockerImage = server.Image.DockerImages.Last().Name,
-            StopCommand = server.Image.StopCommand
+            DockerImage = dockerImage.Name,
+            StopCommand = server.Image.StopCommand,
+            OnlineDetection = server.Image.OnlineDetection
         };
 
         config.Allocations = server.Allocations.Select(x => new ServerConfiguration.AllocationData()
