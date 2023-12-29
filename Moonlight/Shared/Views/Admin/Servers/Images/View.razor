@@ -8,6 +8,8 @@
 @using System.ComponentModel.DataAnnotations
 @using Mappy.Net
 @using Microsoft.EntityFrameworkCore
+@using Moonlight.App.Models.Servers
+@using Newtonsoft.Json
 
 @attribute [RequirePermission(Permission.AdminServers)]
 
@@ -165,6 +167,32 @@
                 </div>
             </div>
             <div class="card mt-5">
+                <div class="card-header">
+                    <span class="card-title">Parse configurations</span>
+                    <div class="card-toolbar">
+                        <button @onclick="AddParseConfig" type="button" class="btn btn-icon btn-success">
+                            <i class="bx bx-sm bx-plus"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-5">
+                        @foreach (var config in ParseConfigs)
+                        {
+                            <div class="col-md-12">
+                                <div class="input-group">
+                                    <input @bind="config.Type" type="text" class="form-control form-control-solid" placeholder="Parser name">
+                                    <input @bind="config.File" type="text" class="form-control form-control-solid" placeholder="File location">
+                                    <input @bind="config.Key" type="text" class="form-control form-control-solid" placeholder="Key">
+                                    <input @bind="config.Variable" type="text" class="form-control form-control-solid" placeholder="Variable">
+                                    <WButton OnClick="() => RemoveParseConfig(config)" CssClasses="btn btn-danger">Remove</WButton>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="card mt-5">
                 <div class="card-body text-end">
                     <button class="btn btn-success" type="submit">Save changes</button>
                 </div>
@@ -175,14 +203,14 @@
 
 @code
 {
-    [Parameter]
-    public int Id { get; set; }
+    [Parameter] public int Id { get; set; }
 
     private ServerImage? Image;
 
     private ImageForm Form = new();
     private List<DockerImageForm> DockerImages = new();
     private List<ImageVariableForm> Variables = new();
+    private List<ParseConfigForm> ParseConfigs = new();
 
     private async Task AddDockerImage()
     {
@@ -208,9 +236,21 @@
         await InvokeAsync(StateHasChanged);
     }
 
+    private async Task AddParseConfig()
+    {
+        ParseConfigs.Add(new());
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task RemoveParseConfig(ParseConfigForm form)
+    {
+        ParseConfigs.Remove(form);
+        await InvokeAsync(StateHasChanged);
+    }
+
     private async Task AddImage()
     {
-    // Additional validation
+        // Additional validation
 
         foreach (var dockerImage in DockerImages)
         {
@@ -247,8 +287,26 @@
                 throw new DisplayException(errorMsg);
             }
         }
+        
+        foreach (var parseConfig in ParseConfigs)
+        {
+            var context = new ValidationContext(parseConfig, null, null);
+            var results = new List<ValidationResult>();
 
-    // Add image
+            var isValid = Validator.TryValidateObject(parseConfig, context, results, true);
+
+            if (!isValid)
+            {
+                var errorMsg = "Unknown form error";
+
+                if (results.Any())
+                    errorMsg = results.First().ErrorMessage ?? errorMsg;
+
+                throw new DisplayException(errorMsg);
+            }
+        }
+
+        // Add image
 
         var image = Mapper.Map(Image!, Form);
 
@@ -258,7 +316,7 @@
 
         var dockerImages = image.DockerImages.ToArray();
         var variables = image.Variables.ToArray();
-        
+
         image.DockerImages.Clear();
         image.Variables.Clear();
 
@@ -267,9 +325,9 @@
 
         foreach (var variable in variables)
             VariableRepository.Delete(variable);
-            
+
         ImageRepository.Update(image);
-        
+
         // Adding the new variables
         image.DockerImages.AddRange(
             DockerImages.Select(
@@ -278,6 +336,11 @@
         image.Variables.AddRange(
             Variables.Select(
                 x => Mapper.Map<ServerImageVariable>(x)));
+        
+        // Serialize parse configurations 
+        image.ParseConfigurations = JsonConvert.SerializeObject(
+            ParseConfigs.Select(
+                x => Mapper.Map<ServerParseConfig>(x)));
 
         ImageRepository.Update(image);
 
@@ -299,8 +362,11 @@
 
             Variables = Image.Variables.Select(x => Mapper.Map<ImageVariableForm>(x)).ToList();
             DockerImages = Image.DockerImages.Select(x => Mapper.Map<DockerImageForm>(x)).ToList();
+
+            var configs = JsonConvert.DeserializeObject<ServerParseConfig[]>(Image.ParseConfigurations) ?? Array.Empty<ServerParseConfig>();
+            ParseConfigs = configs.Select(x => Mapper.Map<ParseConfigForm>(x)).ToList();
         }
-        
+
         return Task.CompletedTask;
     }
 }

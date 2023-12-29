@@ -16,6 +16,7 @@ public class ServerImage
 
     public List<ServerImageVariable> Variables { get; set; } = new();
     public List<ServerDockerImage> DockerImages { get; set; } = new();
+    public string ParseConfigurations { get; set; } = "[]";
     
     public string Author { get; set; } = "";
     public string? DonateUrl { get; set; }

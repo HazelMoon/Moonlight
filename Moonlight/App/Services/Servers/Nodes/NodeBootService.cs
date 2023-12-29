@@ -1,3 +1,4 @@
+using System.Net.Sockets;
 using Microsoft.EntityFrameworkCore;
 using Moonlight.App.Database.Entities.Servers;
 using Moonlight.App.Exceptions;
@@ -34,6 +35,14 @@ public class NodeBootService
                 try
                 {
                     await Boot(node);
+                }
+                catch (HttpRequestException requestException)
+                {
+                    if (requestException.InnerException is SocketException socketException)
+                    {
+                        // If the panel was offline and will start again this error will be resolved when the panel sends a boot signal to the nodes
+                        Logger.Warn($"Unable to start boot process for node '{node.Name}'. Node is unreachable: {socketException.Message}");
+                    }
                 }
                 catch (Exception e)
                 {

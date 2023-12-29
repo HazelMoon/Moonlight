@@ -49,6 +49,8 @@ public static class ServerExtensions
 
         config.Variables = server.Variables
             .ToDictionary(x => x.Key, x => x.Value);
+
+        config.ParseConfigurations = server.Image.ParseConfigurations;
         
         return config;
     }
