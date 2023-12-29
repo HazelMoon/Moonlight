@@ -2,7 +2,7 @@ using Moonlight.App.Database.Entities.Servers;
 using Moonlight.App.Exceptions.Server;
 using Moonlight.App.Extensions;
 using Moonlight.App.Helpers;
-using Moonlight.App.Models.Server.Api.Resources;
+using Moonlight.App.Models.Servers.Api.Resources;
 using Moonlight.App.Repositories;
 
 namespace Moonlight.App.Services.Servers.Nodes;

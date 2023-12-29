@@ -26,6 +26,7 @@ public class ServerConfiguration
         public string DockerImage { get; set; }
         public string StopCommand { get; set; }
         public string OnlineDetection { get; set; }
+        public string ParseConfigurations { get; set; } = "[]"; 
     }
     
     public class AllocationData

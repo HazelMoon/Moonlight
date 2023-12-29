@@ -24,7 +24,8 @@ public static class ServerExtensions
         {
             DockerImage = dockerImage.Name,
             StopCommand = server.Image.StopCommand,
-            OnlineDetection = server.Image.OnlineDetection
+            OnlineDetection = server.Image.OnlineDetection,
+            ParseConfigurations = server.Image.ParseConfigurations
         };
 
         config.Allocations = server.Allocations.Select(x => new ServerConfiguration.AllocationData()
@@ -49,8 +50,6 @@ public static class ServerExtensions
 
         config.Variables = server.Variables
             .ToDictionary(x => x.Key, x => x.Value);
-
-        config.ParseConfigurations = server.Image.ParseConfigurations;
         
         return config;
     }

@@ -1,4 +1,4 @@
-namespace Moonlight.App.Models.Server;
+namespace Moonlight.App.Models.Servers;
 
 public class ImageExport
 {
@@ -16,17 +16,19 @@ public class ImageExport
     // We use the "Image" prefix for the variables to stop mappy from trying to map it
     public List<Variable> ImageVariables { get; set; } = new();
     public List<DockerImage> ImageDockerImages { get; set; } = new();
-    
+
     public string Author { get; set; } = "";
     public string? DonateUrl { get; set; }
     public string? UpdateUrl { get; set; }
     
+    public string ParseConfigurations { get; set; } = "[]";
+
     public class Variable
     {
         public string Key { get; set; } = "";
         public string Value { get; set; } = "";
     }
-    
+
     public class DockerImage
     {
         public string Name { get; set; } = "";

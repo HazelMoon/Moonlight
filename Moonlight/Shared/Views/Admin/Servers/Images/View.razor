@@ -5,11 +5,11 @@
 @using Moonlight.App.Repositories
 @using Moonlight.App.Database.Entities.Servers
 @using Moonlight.App.Models.Forms.Admin.Servers.Images
-@using System.ComponentModel.DataAnnotations
 @using Mappy.Net
 @using Microsoft.EntityFrameworkCore
 @using Moonlight.App.Models.Servers
 @using Newtonsoft.Json
+@using Moonlight.Shared.Components.Servers
 
 @attribute [RequirePermission(Permission.AdminServers)]
 
@@ -166,31 +166,8 @@
                     </div>
                 </div>
             </div>
-            <div class="card mt-5">
-                <div class="card-header">
-                    <span class="card-title">Parse configurations</span>
-                    <div class="card-toolbar">
-                        <button @onclick="AddParseConfig" type="button" class="btn btn-icon btn-success">
-                            <i class="bx bx-sm bx-plus"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="row g-5">
-                        @foreach (var config in ParseConfigs)
-                        {
-                            <div class="col-md-12">
-                                <div class="input-group">
-                                    <input @bind="config.Type" type="text" class="form-control form-control-solid" placeholder="Parser name">
-                                    <input @bind="config.File" type="text" class="form-control form-control-solid" placeholder="File location">
-                                    <input @bind="config.Key" type="text" class="form-control form-control-solid" placeholder="Key">
-                                    <input @bind="config.Variable" type="text" class="form-control form-control-solid" placeholder="Variable">
-                                    <WButton OnClick="() => RemoveParseConfig(config)" CssClasses="btn btn-danger">Remove</WButton>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </div>
+            <div class="mt-5">
+                <ParseConfigEditor InitialContent="@Image.ParseConfigurations" @ref="ParseConfigEditor" />
             </div>
             <div class="card mt-5">
                 <div class="card-body text-end">
@@ -205,12 +182,12 @@
 {
     [Parameter] public int Id { get; set; }
 
+    private ParseConfigEditor ParseConfigEditor;
+    
     private ServerImage? Image;
-
     private ImageForm Form = new();
     private List<DockerImageForm> DockerImages = new();
     private List<ImageVariableForm> Variables = new();
-    private List<ParseConfigForm> ParseConfigs = new();
 
     private async Task AddDockerImage()
     {
@@ -236,78 +213,13 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    private async Task AddParseConfig()
-    {
-        ParseConfigs.Add(new());
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task RemoveParseConfig(ParseConfigForm form)
-    {
-        ParseConfigs.Remove(form);
-        await InvokeAsync(StateHasChanged);
-    }
-
     private async Task AddImage()
     {
         // Additional validation
-
-        foreach (var dockerImage in DockerImages)
-        {
-            var context = new ValidationContext(dockerImage, null, null);
-            var results = new List<ValidationResult>();
-
-            var isValid = Validator.TryValidateObject(dockerImage, context, results, true);
-
-            if (!isValid)
-            {
-                var errorMsg = "Unknown form error";
-
-                if (results.Any())
-                    errorMsg = results.First().ErrorMessage ?? errorMsg;
-
-                throw new DisplayException(errorMsg);
-            }
-        }
-
-        foreach (var variable in Variables)
-        {
-            var context = new ValidationContext(variable, null, null);
-            var results = new List<ValidationResult>();
-
-            var isValid = Validator.TryValidateObject(variable, context, results, true);
-
-            if (!isValid)
-            {
-                var errorMsg = "Unknown form error";
-
-                if (results.Any())
-                    errorMsg = results.First().ErrorMessage ?? errorMsg;
-
-                throw new DisplayException(errorMsg);
-            }
-        }
-        
-        foreach (var parseConfig in ParseConfigs)
-        {
-            var context = new ValidationContext(parseConfig, null, null);
-            var results = new List<ValidationResult>();
-
-            var isValid = Validator.TryValidateObject(parseConfig, context, results, true);
-
-            if (!isValid)
-            {
-                var errorMsg = "Unknown form error";
-
-                if (results.Any())
-                    errorMsg = results.First().ErrorMessage ?? errorMsg;
-
-                throw new DisplayException(errorMsg);
-            }
-        }
+        await ValidatorHelper.ValidateRange(DockerImages);
+        await ValidatorHelper.ValidateRange(Variables);
 
         // Add image
-
         var image = Mapper.Map(Image!, Form);
 
         // As i am too lazy to update the variables nor the docker images
@@ -337,10 +249,7 @@
             Variables.Select(
                 x => Mapper.Map<ServerImageVariable>(x)));
         
-        // Serialize parse configurations 
-        image.ParseConfigurations = JsonConvert.SerializeObject(
-            ParseConfigs.Select(
-                x => Mapper.Map<ServerParseConfig>(x)));
+        image.ParseConfigurations = await ParseConfigEditor.ValidateAndGet();
 
         ImageRepository.Update(image);
 
@@ -348,7 +257,7 @@
         Navigation.NavigateTo("/admin/servers/images");
     }
 
-    private Task Load(LazyLoader _)
+    private async Task Load(LazyLoader _)
     {
         Image = ImageRepository
             .Get()
@@ -362,11 +271,6 @@
 
             Variables = Image.Variables.Select(x => Mapper.Map<ImageVariableForm>(x)).ToList();
             DockerImages = Image.DockerImages.Select(x => Mapper.Map<DockerImageForm>(x)).ToList();
-
-            var configs = JsonConvert.DeserializeObject<ServerParseConfig[]>(Image.ParseConfigurations) ?? Array.Empty<ServerParseConfig>();
-            ParseConfigs = configs.Select(x => Mapper.Map<ParseConfigForm>(x)).ToList();
         }
-
-        return Task.CompletedTask;
     }
 }

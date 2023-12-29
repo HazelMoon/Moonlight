@@ -1,4 +1,4 @@
-namespace Moonlight.App.Models.Server;
+namespace Moonlight.App.Models.Servers;
 
 public class ImageImport
 {
@@ -20,6 +20,8 @@ public class ImageImport
     public string Author { get; set; } = "";
     public string? DonateUrl { get; set; }
     public string? UpdateUrl { get; set; }
+    
+    public string ParseConfigurations { get; set; } = "[]";
     
     public class Variable
     {

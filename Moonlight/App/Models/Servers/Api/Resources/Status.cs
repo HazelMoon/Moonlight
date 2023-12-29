@@ -1,4 +1,4 @@
-namespace Moonlight.App.Models.Server.Api.Resources;
+namespace Moonlight.App.Models.Servers.Api.Resources;
 
 public class Status
 {
