@@ -7,11 +7,9 @@
 @using Moonlight.App.Models.Forms.Admin.Servers.Images
 @using Mappy.Net
 @using Microsoft.EntityFrameworkCore
-@using Moonlight.App.Models.Servers
-@using Newtonsoft.Json
 @using Moonlight.Shared.Components.Servers
 
-@attribute [RequirePermission(Permission.AdminServers)]
+@attribute [RequirePermission(Permission.AdminServersImages)]
 
 @inject Repository<ServerImage> ImageRepository
 @inject Repository<ServerImageVariable> VariableRepository

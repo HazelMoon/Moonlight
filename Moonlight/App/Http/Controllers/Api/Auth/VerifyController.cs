@@ -27,7 +27,7 @@ public class VerifyController : Controller
         if (!IdentityService.IsSignedIn)
             return Redirect("/login");
 
-        if (!await JwtService.Validate(token))
+        if (!await JwtService.Validate(token, JwtType.PanelEmailVerification))
             return Redirect("/login");
 
         var data = await JwtService.Decode(token);

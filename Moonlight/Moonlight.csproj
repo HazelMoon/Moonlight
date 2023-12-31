@@ -16,7 +16,6 @@
     <ItemGroup>
       <Folder Include="App\Database\Migrations\" />
       <Folder Include="App\Http\Middleware\" />
-      <Folder Include="App\Http\Requests\" />
       <Folder Include="App\Models\Servers\Api\Requests\" />
       <Folder Include="storage\logs\" />
     </ItemGroup>
