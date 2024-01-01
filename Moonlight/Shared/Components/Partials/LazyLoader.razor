@@ -44,9 +44,12 @@ else
     {
         if (firstRender)
         {
-            await Load.Invoke(this);
-            Loaded = true;
-            await InvokeAsync(StateHasChanged);
+            Task.Run(async () =>
+            {
+                await Load.Invoke(this);
+                Loaded = true;
+                await InvokeAsync(StateHasChanged);
+            });
         }
     }
 
@@ -60,8 +63,12 @@ else
     {
         Loaded = false;
         await InvokeAsync(StateHasChanged);
-        await Load.Invoke(this);
-        Loaded = true;
-        await InvokeAsync(StateHasChanged);
+
+        Task.Run(async () =>
+        {
+            await Load.Invoke(this);
+            Loaded = true;
+            await InvokeAsync(StateHasChanged);
+        });
     }
 }

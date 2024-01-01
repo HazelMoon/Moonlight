@@ -1,0 +1,262 @@
+@using Moonlight.App.Models.Abstractions.FileAccess
+
+<LazyLoader @ref="LazyLoader" Load="Load">
+    <table class="w-100 table table-responsive table-row-bordered">
+        <tbody>
+
+        @if (SelectedEntries.Count != 0)
+        {
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td class="text-end align-middle fs-5">
+                    <span class="text-primary">@SelectedEntries.Count</span> element(s) selected
+                </td>
+                <td class="w-50 text-start">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-icon btn-danger">
+                            <i class="text-white bx bx-sm bx-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        }
+
+        @if (ShowGoUp && Path != "/" && !DisableNavigation)
+        {
+            <tr>
+                @if (ShowSelect)
+                {
+                    <td class="w-10px align-middle">
+                    </td>
+                }
+                @if (ShowIcons)
+                {
+                    <td class="w-10px align-middle">
+                        <i class="bx bx-md bx-folder"></i>
+                    </td>
+                }
+                <td class="align-middle fs-6">
+                    @{
+                        var upPath = "..";
+                    }
+
+                    <a href="#"
+                       @onclick:preventDefault
+                       @onclick="() => Navigate(upPath)">
+                        Go up
+                    </a>
+                </td>
+                @if (ShowSize)
+                {
+                    <td class="align-middle fs-6 d-none d-sm-table-cell text-end">
+                        <span>-</span>
+                    </td>
+                }
+                @if (ShowLastModified)
+                {
+                    <td class="align-middle fs-6 d-none d-sm-table-cell text-end">
+                        -
+                    </td>
+                }
+                @if (ShowActions)
+                {
+                    <td class="w-50 text-end">
+                    </td>
+                }
+            </tr>
+        }
+
+        @foreach (var entry in Entries)
+        {
+            <tr>
+                @if (ShowSelect)
+                {
+                    <td class="w-10px align-middle">
+                        <div class="form-check form-check">
+                            <input class="form-check-input" type="checkbox" value="" @oninput="args => HandleSelected(entry, args)">
+                        </div>
+                    </td>
+                }
+                @if (ShowIcons)
+                {
+                    <td class="w-10px align-middle">
+                        @if (entry.IsFile)
+                        {
+                            <i class="bx bx-md bx-file"></i>
+                        }
+                        else
+                        {
+                            <i class="bx bx-md bx-folder"></i>
+                        }
+                    </td>
+                }
+                <td class="align-middle fs-6">
+                    @if (DisableNavigation)
+                    {
+                        <span>@(entry.Name)</span>
+                    }
+                    else
+                    {
+                        <a href="#"
+                           @onclick:preventDefault
+                           @onclick="() => HandleClick(entry)">
+                            @(entry.Name)
+                        </a>
+                    }
+                </td>
+                @if (ShowSize)
+                {
+                    <td class="align-middle fs-6 d-none d-sm-table-cell text-end">
+                        @if (entry.IsFile)
+                        {
+                            @(Formatter.FormatSize(entry.Size))
+                        }
+                        else
+                        {
+                            <span>-</span>
+                        }
+                    </td>
+                }
+                @if (ShowLastModified)
+                {
+                    <td class="align-middle fs-6 d-none d-sm-table-cell text-end">
+                        @(Formatter.FormatDate(entry.LastModifiedAt))
+                    </td>
+                }
+                @if (ShowActions)
+                {
+                    <td class="w-50 text-end">
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-icon btn-danger">
+                                <i class="text-white bx bx-sm bx-trash"></i>
+                            </button>
+
+                            <div class="dropdown">
+                                <button class="btn btn-icon btn-secondary rounded-start-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="text-white bx bx-sm bx-dots-horizontal-rounded"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" href="#">Action</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#">Another action</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#">Something else here</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </td>
+                }
+            </tr>
+        }
+        </tbody>
+    </table>
+</LazyLoader>
+
+
+@code
+{
+    [Parameter] public IFileAccess FileAccess { get; set; }
+
+    [Parameter] public Func<FileEntry, bool>? Filter { get; set; }
+    [Parameter] public bool ShowSize { get; set; } = true;
+    [Parameter] public bool ShowLastModified { get; set; } = true;
+    [Parameter] public bool ShowIcons { get; set; } = true;
+    [Parameter] public bool ShowActions { get; set; } = true;
+    [Parameter] public bool ShowSelect { get; set; } = true;
+    [Parameter] public bool ShowGoUp { get; set; } = true;
+    [Parameter] public bool DisableNavigation { get; set; } = false;
+    [Parameter] public Func<FileEntry, Task>? OnFileClicked { get; set; }
+    [Parameter] public Func<Task>? OnSelectionChanged { get; set; }
+    [Parameter] public Func<string, Task>? OnPathChanged { get; set; }
+
+    public readonly List<FileEntry> SelectedEntries = new();
+
+    private LazyLoader LazyLoader;
+    private FileEntry[] Entries;
+    private string Path = "/";
+
+    private async Task Load(LazyLoader lazyLoader)
+    {
+        await lazyLoader.SetText("Loading files and folders");
+
+        // Load all entries
+        Entries = await FileAccess.List();
+        
+        await lazyLoader.SetText("Sorting files and folders");
+
+        // Perform sorting and filtering
+        if (Filter != null)
+        {
+            Entries = Entries
+                .Where(x => Filter.Invoke(x))
+                .ToArray();
+        }
+
+        Entries = Entries
+            .GroupBy(x => x.IsFile)
+            .OrderBy(x => x.Key)
+            .SelectMany(x => x.OrderBy(y => y.Name))
+            .ToArray();
+
+        SelectedEntries.Clear();
+
+        Path = await FileAccess.GetCurrentDirectory();
+
+        if (OnPathChanged != null)
+            await OnPathChanged.Invoke(Path);
+    }
+
+    private async Task HandleClick(FileEntry fileEntry)
+    {
+        if (fileEntry.IsDirectory && !DisableNavigation)
+        {
+            await Navigate(fileEntry.Name);
+        }
+        else
+        {
+            if (OnFileClicked != null)
+                await OnFileClicked.Invoke(fileEntry);
+        }
+    }
+
+    private async Task HandleSelected(FileEntry fileEntry, ChangeEventArgs args)
+    {
+        if (args.Value == null) // This should never be called. Still i want to handle it
+            return;
+
+        if (args.Value.ToString() == "True")
+        {
+            if (!SelectedEntries.Contains(fileEntry))
+                SelectedEntries.Add(fileEntry);
+        }
+        else
+        {
+            if (SelectedEntries.Contains(fileEntry))
+                SelectedEntries.Remove(fileEntry);
+        }
+
+        if (OnSelectionChanged != null)
+            await OnSelectionChanged.Invoke();
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public async Task Navigate(string name)
+    {
+        await FileAccess.ChangeDirectory(name);
+        await LazyLoader.Reload();
+    }
+
+    public async Task NavigateToPath(string path)
+    {
+        await FileAccess.SetDirectory(path);
+        await LazyLoader.Reload();
+    }
+}

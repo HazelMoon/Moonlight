@@ -1,0 +1,15 @@
+@page "/test"
+
+@using Moonlight.Shared.Components.Files
+@using Moonlight.App.Models.Abstractions.FileAccess
+@using Moonlight.App.Helpers.FileAccesses
+
+<div class="card card-body">
+    <FileView FileAccess="FileAccess">
+    </FileView>
+</div>
+
+@code
+{
+    private IFileAccess FileAccess = new LocalFileAccess("/");
+}
