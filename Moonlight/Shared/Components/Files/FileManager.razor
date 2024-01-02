@@ -1,0 +1,114 @@
+@using Moonlight.App.Models.Abstractions.FileAccess
+@using Microsoft.AspNetCore.Components.Forms
+@using Moonlight.App.Database.Entities.Store
+
+@inject IJSRuntime JsRuntime
+
+<div class="card">
+    <div class="card-header">
+        <div class="card-title">
+            <div class="badge badge-primary badge-lg fs-5 py-2">
+                @{
+                    var elements = Path
+                        .Split("/")
+                        .Where(x => !string.IsNullOrEmpty(x))
+                        .ToList();
+
+                    int i = 1;
+                    var root = "/";
+                }
+
+                <a href="#" @onclick:preventDefault @onclick="() => NavigateToPath(root)" class="invisible-a mx-2">/</a>
+                @foreach (var element in elements)
+                {
+                    var pathToCd = "/" + string.Join('/', elements.Take(i));
+
+                    <a href="#" @onclick:preventDefault @onclick="() => NavigateToPath(pathToCd)" class="invisible-a">@(element)</a>
+                    <div class="mx-2">/</div>
+
+                    i++;
+                }
+            </div>
+        </div>
+        <div class="card-toolbar">
+            @if (ShowFileUploader)
+            {
+                <button type="button" @onclick="ToggleFileUploader" class="btn btn-light-primary me-3">
+                    Back
+                </button>
+            }
+            else
+            {
+                <a href="javascript:void(0)" class="btn btn-secondary me-3">
+                    <i class="bx bx-sm bx-link-external me-2"></i>
+                    Launch
+                </a>
+                <button type="button" @onclick="ToggleFileUploader" class="btn btn-light-primary me-3">
+                    <i class="bx bx-sm bx-upload me-2"></i>
+                    Upload
+                </button>
+                <div class="dropdown">
+                    <a class="btn btn-primary dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        New
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="bx bx-sm bx-file text-primary me-2 align-middle"></i>
+                                <span class="align-middle fs-6">File</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="bx bx-sm bx-folder text-primary me-2 align-middle"></i>
+                                <span class="align-middle fs-6">Folder</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            }
+        </div>
+    </div>
+    <div class="card-body" @ondragenter="() => ToggleFileUploader(true)">
+        @if (ShowFileUploader)
+        {
+            <FileUploader Path="@Path" Service="Service" />
+        }
+        else
+        {
+            <FileView @ref="FileView" FileAccess="FileAccess" OnPathChanged="OnPathChanged"/>
+        }
+    </div>
+</div>
+
+@code
+{
+    [Parameter] public IFileAccess FileAccess { get; set; }
+    [Parameter] public Service Service { get; set; }
+
+    private string Path = "/";
+    private bool ShowFileUploader = false;
+    private FileView FileView;
+
+    private async Task OnPathChanged(string path)
+    {
+        Path = path;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task NavigateToPath(string path)
+    {
+        if (ShowFileUploader)
+            await ToggleFileUploader(false);
+
+        await FileView.NavigateToPath(path);
+    }
+
+    private async Task ToggleFileUploader() => await ToggleFileUploader(!ShowFileUploader);
+
+    private async Task ToggleFileUploader(bool b)
+    {
+        ShowFileUploader = b;
+        await InvokeAsync(StateHasChanged);
+    }
+}

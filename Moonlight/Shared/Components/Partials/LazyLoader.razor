@@ -44,11 +44,19 @@ else
     {
         if (firstRender)
         {
-            Task.Run(async () =>
+            await Task.Run(async () =>
             {
-                await Load.Invoke(this);
-                Loaded = true;
-                await InvokeAsync(StateHasChanged);
+                try
+                {
+                    await Load.Invoke(this);
+                    Loaded = true;
+                    await InvokeAsync(StateHasChanged);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
             });
         }
     }
@@ -69,6 +77,9 @@ else
             await Load.Invoke(this);
             Loaded = true;
             await InvokeAsync(StateHasChanged);
+        }).ContinueWith(task =>
+        {
+            if (task.IsFaulted) throw task.Exception ?? new Exception("An unknown error occured");
         });
     }
 }

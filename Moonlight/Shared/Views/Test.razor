@@ -1,15 +1,26 @@
 @page "/test"
 
-@using Moonlight.Shared.Components.Files
+@inject Repository<App.Database.Entities.Store.Service> ServiceRepository
+
 @using Moonlight.App.Models.Abstractions.FileAccess
 @using Moonlight.App.Helpers.FileAccesses
+@using Moonlight.App.Repositories
+@using Moonlight.Shared.Components.Files
 
-<div class="card card-body">
-    <FileView FileAccess="FileAccess">
-    </FileView>
-</div>
+<FileManager FileAccess="FileAccess" Service="Service" />
 
 @code
 {
-    private IFileAccess FileAccess = new LocalFileAccess("/");
+    private IFileAccess FileAccess = new LocalFileAccess("/var/lib/moonlight/volumes/1/");
+
+    private App.Database.Entities.Store.Service Service;
+    
+    protected override Task OnParametersSetAsync()
+    {
+        Service = ServiceRepository
+            .Get()
+            .First(x => x.Id == 2);
+        
+        return Task.CompletedTask;
+    }
 }

@@ -50,6 +50,7 @@ builder.Services.AddDbContext<DataContext>();
 
 // Helpers
 builder.Services.AddScoped<NodeRequestHelper>();
+builder.Services.AddScoped<FileUploadHelper>();
 
 // Repositories
 builder.Services.AddScoped(typeof(Repository<>));
@@ -65,6 +66,7 @@ builder.Services.AddScoped<ModalService>();
 builder.Services.AddScoped<AlertService>();
 builder.Services.AddScoped<FileDownloadService>();
 builder.Services.AddScoped<ClipboardService>();
+builder.Services.AddScoped<DropzoneService>();
 
 // Services / Store
 builder.Services.AddScoped<StoreService>();

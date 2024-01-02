@@ -27,7 +27,7 @@ public class ResetController : Controller
     {
         // Validate token
         
-        if (!await JwtService.Validate(token, JwtType.PanelPasswordReset))
+        if (!await JwtService.Validate(token, JwtType.PasswordReset))
             return Redirect("/password-reset");
 
         var data = await JwtService.Decode(token);

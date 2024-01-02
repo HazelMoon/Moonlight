@@ -14,9 +14,28 @@ public class NodeRequestHelper
         NodeRepository = nodeRepository;
     }
 
-    public Task<ServerNode> UnpackNode(Controller controller)
+    public async Task<ServerNode> UnpackNode(Controller controller) => await UnpackNode(controller.Request);
+
+    public async Task<bool> Verify(HttpRequest request)
     {
-        var requestHeaders = controller.Request.Headers;
+        try
+        {
+            await UnpackNode(request);
+            return true;
+        }
+        catch (BadRequestException)
+        {
+            return false;
+        }
+        catch (ForbiddenException)
+        {
+            return false;
+        }
+    }
+    
+    public Task<ServerNode> UnpackNode(HttpRequest request)
+    {
+        var requestHeaders = request.Headers;
 
         if (!requestHeaders.ContainsKey("Authorization"))
             throw new BadRequestException("Authorization header is missing");

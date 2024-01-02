@@ -100,7 +100,7 @@ public class UserAuthService
         var jwt = await JwtService.Create(data =>
         {
             data.Add("mailToVerify", user.Email);
-        }, JwtType.PanelEmailVerification, TimeSpan.FromMinutes(10));
+        }, JwtType.EmailVerification, TimeSpan.FromMinutes(10));
 
         await MailService.Send(user, "Verify your account", "verifyMail", user, new MailVerify()
         {
@@ -120,7 +120,7 @@ public class UserAuthService
         var jwt = await JwtService.Create(data =>
         {
             data.Add("accountToReset", user.Id.ToString());
-        }, JwtType.PanelPasswordReset, TimeSpan.FromMinutes(10));
+        }, JwtType.PasswordReset, TimeSpan.FromMinutes(10));
         
         await MailService.Send(user, "Password reset for your account", "passwordReset", user, new ResetPassword()
         {

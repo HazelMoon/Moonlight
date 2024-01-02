@@ -1,4 +1,6 @@
-﻿namespace Moonlight.App.Models.Abstractions.Services;
+﻿using Moonlight.App.Database.Entities;
+
+namespace Moonlight.App.Models.Abstractions.Services;
 
 public abstract class ServiceActions
 {

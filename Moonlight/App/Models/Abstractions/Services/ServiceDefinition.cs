@@ -1,7 +1,4 @@
-﻿using Microsoft.AspNetCore.Components;
-using Moonlight.App.Database.Entities;
-
-namespace Moonlight.App.Models.Abstractions.Services;
+﻿namespace Moonlight.App.Models.Abstractions.Services;
 
 public abstract class ServiceDefinition
 {

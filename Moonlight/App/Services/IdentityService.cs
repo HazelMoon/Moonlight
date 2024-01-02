@@ -73,7 +73,7 @@ public class IdentityService
         if (string.IsNullOrEmpty(Token))
             return;
 
-        if (!await JwtService.Validate(Token, JwtType.PanelUser))
+        if (!await JwtService.Validate(Token, JwtType.User))
             return;
 
         var data = await JwtService.Decode(Token);
@@ -150,7 +150,7 @@ public class IdentityService
         {
             data.Add("userId", user.Id.ToString());
             data.Add("issuedAt", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString());
-        }, JwtType.PanelUser, TimeSpan.FromDays(10));
+        }, JwtType.User, TimeSpan.FromDays(10));
 
         return token;
     }

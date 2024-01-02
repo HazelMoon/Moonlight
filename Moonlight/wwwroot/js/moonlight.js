@@ -20,6 +20,29 @@ window.moonlight = {
         {
             var toast = new ToastHelper(title, message, color, timeout);
             toast.show();
+        },
+        
+        // Progress toasts 
+        progress : {
+            create: function (id, text) {
+                var toast = new ToastHelper("Progress", text, "secondary", 0);
+                toast.showAlways();
+                
+                toast.domElement.setAttribute('data-ml-toast-id', id);
+            },
+            modify: function (id, text) {
+                var toast = document.querySelector('[data-ml-toast-id="' + id + '"]');
+                
+                toast.getElementsByClassName("toast-body")[0].innerText = text;
+            },
+            remove: function (id) {
+                var toast = document.querySelector('[data-ml-toast-id="' + id + '"]');
+                bootstrap.Toast.getInstance(toast).hide();
+
+                setTimeout(() => {
+                    toast.remove();
+                }, 2);
+            }
         }
     },
     modals: {
@@ -182,6 +205,71 @@ window.moonlight = {
                     console.error('Async: Could not copy text: ', err);
                 }
             );
+        }
+    },
+    dropzone: {
+        create: function (elementId, url) {
+            var id = "#" + elementId;
+            var dropzone = document.querySelector(id);
+
+            // set the preview element template
+            var previewNode = dropzone.querySelector(".dropzone-item");
+            previewNode.id = "";
+            var previewTemplate = previewNode.parentNode.innerHTML;
+            previewNode.parentNode.removeChild(previewNode);
+
+            var fileDropzone = new Dropzone(id, {
+                url: url,
+                parallelUploads: 20,
+                maxFilesize: 100,
+                previewTemplate: previewTemplate,
+                previewsContainer: id + " .dropzone-items",
+                clickable: id + " .dropzone-select",
+                createImageThumbnails: false,
+                ignoreHiddenFiles: false,
+                disablePreviews: false
+            });
+
+            fileDropzone.on("addedfile", function (file) {
+                const dropzoneItems = dropzone.querySelectorAll('.dropzone-item');
+                dropzoneItems.forEach(dropzoneItem => {
+                    dropzoneItem.style.display = '';
+                });
+            });
+
+            // Update the total progress bar
+            fileDropzone.on("totaluploadprogress", function (progress) {
+                const progressBars = dropzone.querySelectorAll('.progress-bar');
+                progressBars.forEach(progressBar => {
+                    progressBar.style.width = progress + "%";
+                });
+            });
+
+            fileDropzone.on("sending", function (file) {
+                // Show the total progress bar when upload starts
+                const progressBars = dropzone.querySelectorAll('.progress-bar');
+                progressBars.forEach(progressBar => {
+                    progressBar.style.opacity = "1";
+                });
+            });
+
+            // Hide the total progress bar when nothing"s uploading anymore
+            fileDropzone.on("complete", function (progress) {
+                const progressBars = dropzone.querySelectorAll('.dz-complete');
+
+                setTimeout(function () {
+                    progressBars.forEach(progressBar => {
+                        progressBar.querySelector('.progress-bar').style.opacity = "1";
+                        progressBar.querySelector('.progress').style.opacity = "1";
+
+                        progressBar.querySelector('.progress-bar').classList.remove("bg-primary");
+                        progressBar.querySelector('.progress-bar').classList.add("bg-success");
+                    });
+                }, 300);
+            });
+        },
+        updateUrl: function (elementId, url) {
+            Dropzone.forElement("#" + elementId).options.url = url;
         }
     }
 }

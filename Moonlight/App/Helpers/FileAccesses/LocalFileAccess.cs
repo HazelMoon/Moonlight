@@ -4,17 +4,19 @@ namespace Moonlight.App.Helpers.FileAccesses;
 
 public class LocalFileAccess : IFileAccess
 {
-    private string currentDirectory;
+    private string CurrentDirectory;
+    private string RootDirectory;
 
-    public LocalFileAccess(string initialDirectory)
+    public LocalFileAccess(string rootDirectory)
     {
-        currentDirectory = initialDirectory;
+        CurrentDirectory = "/";
+        RootDirectory = rootDirectory;
     }
 
     public async Task<FileEntry[]> List()
     {
         var entries = Directory
-            .GetFileSystemEntries(currentDirectory)
+            .GetFileSystemEntries(GetRealPath(CurrentDirectory))
             .Select(entry => GetFileEntry(entry))
             .ToArray();
 
@@ -23,12 +25,12 @@ public class LocalFileAccess : IFileAccess
 
     public async Task ChangeDirectory(string relativePath)
     {
-        var newPath = Path.Combine(currentDirectory, relativePath);
+        var newPath = Path.Combine(CurrentDirectory, relativePath);
         newPath = Path.GetFullPath(newPath);
 
-        if (Directory.Exists(newPath))
+        if (Directory.Exists(RootDirectory + newPath))
         {
-            currentDirectory = newPath;
+            CurrentDirectory = newPath;
         }
         else
         {
@@ -38,9 +40,9 @@ public class LocalFileAccess : IFileAccess
 
     public async Task SetDirectory(string path)
     {
-        if (Directory.Exists(path))
+        if (Directory.Exists(GetRealPath(path)))
         {
-            currentDirectory = path;
+            CurrentDirectory = path;
         }
         else
         {
@@ -50,12 +52,12 @@ public class LocalFileAccess : IFileAccess
 
     public async Task<string> GetCurrentDirectory()
     {
-        return await Task.FromResult(currentDirectory);
+        return await Task.FromResult(CurrentDirectory);
     }
 
     public async Task Delete(string path)
     {
-        var fullPath = Path.Combine(currentDirectory, path);
+        var fullPath = GetRealPath(Path.Combine(CurrentDirectory, path));
         if (File.Exists(fullPath) || Directory.Exists(fullPath))
         {
             FileAttributes attributes = File.GetAttributes(fullPath);
@@ -76,8 +78,8 @@ public class LocalFileAccess : IFileAccess
 
     public async Task Move(string from, string to)
     {
-        var sourcePath = Path.Combine(currentDirectory, from);
-        var destinationPath = Path.Combine(currentDirectory, to);
+        var sourcePath = GetRealPath(Path.Combine(CurrentDirectory, from));
+        var destinationPath = GetRealPath(Path.Combine(CurrentDirectory, to));
 
         if (File.Exists(sourcePath) || Directory.Exists(sourcePath))
         {
@@ -91,37 +93,37 @@ public class LocalFileAccess : IFileAccess
 
     public async Task CreateDirectory(string name)
     {
-        var newDirectoryPath = Path.Combine(currentDirectory, name);
+        var newDirectoryPath = GetRealPath(Path.Combine(CurrentDirectory, name));
         Directory.CreateDirectory(newDirectoryPath);
     }
 
     public async Task CreateFile(string name)
     {
-        var newFilePath = Path.Combine(currentDirectory, name);
+        var newFilePath = GetRealPath(Path.Combine(CurrentDirectory, name));
         File.Create(newFilePath).Close(); // Close the file stream to release resources
     }
 
     public async Task<string> ReadFile(string name)
     {
-        var filePath = Path.Combine(currentDirectory, name);
+        var filePath = GetRealPath(Path.Combine(CurrentDirectory, name));
         return await File.ReadAllTextAsync(filePath);
     }
 
     public async Task WriteFile(string name, string content)
     {
-        var filePath = Path.Combine(currentDirectory, name);
+        var filePath = GetRealPath(Path.Combine(CurrentDirectory, name));
         await File.WriteAllTextAsync(filePath, content);
     }
 
     public async Task<Stream> ReadFileStream(string name)
     {
-        var filePath = Path.Combine(currentDirectory, name);
-        return await Task.FromResult<FileStream>(File.OpenRead(filePath));
+        var filePath = GetRealPath(Path.Combine(CurrentDirectory, name));
+        return await Task.FromResult(File.OpenRead(filePath));
     }
 
     public async Task WriteFileStream(string name, Stream dataStream)
     {
-        var filePath = Path.Combine(currentDirectory, name);
+        var filePath = GetRealPath(Path.Combine(CurrentDirectory, name));
         using (var fileStream = File.Create(filePath))
         {
             await dataStream.CopyToAsync(fileStream);
@@ -141,5 +143,13 @@ public class LocalFileAccess : IFileAccess
             IsDirectory = !isFile,
             LastModifiedAt = fileInfo.LastWriteTime
         };
+    }
+
+    public string GetRealPath(string? overrideCurrentDir = null)
+    {
+        if (string.IsNullOrEmpty(overrideCurrentDir))
+            return RootDirectory + CurrentDirectory;
+
+        return RootDirectory + overrideCurrentDir;
     }
 }

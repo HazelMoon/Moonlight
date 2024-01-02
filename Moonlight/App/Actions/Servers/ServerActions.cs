@@ -1,16 +1,19 @@
 using Microsoft.EntityFrameworkCore;
+using Moonlight.App.Database.Entities;
 using Moonlight.App.Database.Entities.Servers;
 using Moonlight.App.Database.Entities.Store;
 using Moonlight.App.Exceptions;
 using Moonlight.App.Helpers;
 using Moonlight.App.Models.Abstractions.Services;
+using Moonlight.App.Models.Abstractions.Services.Extensions;
 using Moonlight.App.Repositories;
 using Moonlight.App.Services.Servers;
+using Moonlight.App.Services.ServiceManage;
 using Newtonsoft.Json;
 
 namespace Moonlight.App.Actions.Servers;
 
-public class ServerActions : ServiceActions
+public class ServerActions : ServiceActions, IServiceFtpActions, IServiceFileManagerActions
 {
     public override async Task Create(IServiceProvider provider, Service service)
     {
@@ -105,5 +108,31 @@ public class ServerActions : ServiceActions
         serverRepo.Delete(server);
         
         return Task.CompletedTask;
+    }
+
+    public async Task<bool> AuthenticateFtpLogin(IServiceProvider provider, User user, int resourceId, HttpRequest request)
+    {
+        var requestHelper = provider.GetRequiredService<NodeRequestHelper>();
+
+        if (!await requestHelper.Verify(request))
+            return false;
+
+        var serverRepo = provider.GetRequiredService<Repository<Server>>();
+        var server = serverRepo
+            .Get()
+            .Include(x => x.Service)
+            .FirstOrDefault(x => x.Id == resourceId);
+
+        if (server == null)
+            return false;
+
+        var serviceManageService = provider.GetRequiredService<ServiceManageService>();
+
+        return await serviceManageService.CheckAccess(server.Service, user);
+    }
+
+    public Task<bool> ProcessFileUpload(IServiceProvider provider, User user, Service service, string fileName, Stream stream)
+    {
+        return Task.FromResult(true);
     }
 }
