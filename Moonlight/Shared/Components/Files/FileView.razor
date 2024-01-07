@@ -294,7 +294,7 @@
         var toastId = "fileDelete" + GetHashCode();
         await ToastService.CreateProgress(toastId, $"[0/{entries.Length}] Deleting items");
 
-        int i = 1;
+        int i = 0;
         foreach (var entry in entries)
         {
             await ToastService.ModifyProgress(toastId, $"[{i}/{entries.Length}] Deleting '{entry.Name}'");
@@ -306,6 +306,8 @@
 
         await ToastService.RemoveProgress(toastId);
         await ToastService.Success($"Successfully deleted {i} items");
+
+        await LazyLoader.Reload();
     }
 
     private async Task ToggleAll(ChangeEventArgs args)
@@ -331,13 +333,19 @@
 
     public async Task Navigate(string name)
     {
-        await FileAccess.ChangeDirectory(name);
-        await LazyLoader.Reload();
+        await LazyLoader.Reload(async loader =>
+        {
+            await loader.SetText("Switching directory on target");
+            await FileAccess.ChangeDirectory(name);
+        });
     }
 
     public async Task NavigateToPath(string path)
     {
-        await FileAccess.SetDirectory(path);
-        await LazyLoader.Reload();
+        await LazyLoader.Reload(async loader =>
+        {
+            await loader.SetText("Switching directory on target");
+            await FileAccess.SetDirectory(path);
+        });
     }
 }

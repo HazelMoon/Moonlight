@@ -220,7 +220,6 @@ window.moonlight = {
 
             var fileDropzone = new Dropzone(id, {
                 url: url,
-                parallelUploads: 20,
                 maxFilesize: 100,
                 previewTemplate: previewTemplate,
                 previewsContainer: id + " .dropzone-items",

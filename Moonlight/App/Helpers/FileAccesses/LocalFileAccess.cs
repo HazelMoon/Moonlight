@@ -123,12 +123,21 @@ public class LocalFileAccess : IFileAccess
 
     public async Task WriteFileStream(string name, Stream dataStream)
     {
+        var memoryStream = new MemoryStream();
+
+        await dataStream.CopyToAsync(memoryStream);
+        
+        await memoryStream.DisposeAsync();
+        
+        return;
+        
         var filePath = GetRealPath(Path.Combine(CurrentDirectory, name));
         using (var fileStream = File.Create(filePath))
         {
             await dataStream.CopyToAsync(fileStream);
         }
     }
+
 
     private FileEntry GetFileEntry(string path)
     {
@@ -151,5 +160,18 @@ public class LocalFileAccess : IFileAccess
             return RootDirectory + CurrentDirectory;
 
         return RootDirectory + overrideCurrentDir;
+    }
+    
+    public IFileAccess Clone()
+    {
+        return new LocalFileAccess(RootDirectory)
+        {
+            CurrentDirectory = CurrentDirectory
+        };
+    }
+
+    public void Dispose()
+    {
+        // TODO release managed resources here
     }
 }

@@ -72,7 +72,7 @@
     <div class="card-body" @ondragenter="() => ToggleFileUploader(true)">
         @if (ShowFileUploader)
         {
-            <FileUploader Path="@Path" Service="Service" />
+            <FileUploader @ref="FileUploader" FileAccess="FileAccess" />
         }
         else
         {
@@ -89,6 +89,7 @@
     private string Path = "/";
     private bool ShowFileUploader = false;
     private FileView FileView;
+    private FileUploader? FileUploader;
 
     private async Task OnPathChanged(string path)
     {

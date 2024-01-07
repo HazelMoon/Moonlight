@@ -50,14 +50,14 @@ builder.Services.AddDbContext<DataContext>();
 
 // Helpers
 builder.Services.AddScoped<NodeRequestHelper>();
-builder.Services.AddScoped<FileUploadHelper>();
 
 // Repositories
 builder.Services.AddScoped(typeof(Repository<>));
 
 // Services / Utils
-builder.Services.AddScoped<JwtService>();
+builder.Services.AddSingleton<JwtService>();
 builder.Services.AddScoped<ConnectionService>();
+builder.Services.AddSingleton<SharedFileAccessService>();
 
 // Services / Interop
 builder.Services.AddScoped<CookieService>();

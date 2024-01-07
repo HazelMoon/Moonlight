@@ -11,7 +11,7 @@
 
 @code
 {
-    private IFileAccess FileAccess = new LocalFileAccess("/var/lib/moonlight/volumes/1/");
+    private IFileAccess FileAccess = new FtpFileAccess("localhost", 2021, "masuowo.1", "uwuuwuuwu");
 
     private App.Database.Entities.Store.Service Service;
     

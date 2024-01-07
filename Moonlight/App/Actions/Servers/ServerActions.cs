@@ -13,7 +13,7 @@ using Newtonsoft.Json;
 
 namespace Moonlight.App.Actions.Servers;
 
-public class ServerActions : ServiceActions, IServiceFtpActions, IServiceFileManagerActions
+public class ServerActions : ServiceActions, IServiceFtpActions
 {
     public override async Task Create(IServiceProvider provider, Service service)
     {
@@ -129,10 +129,5 @@ public class ServerActions : ServiceActions, IServiceFtpActions, IServiceFileMan
         var serviceManageService = provider.GetRequiredService<ServiceManageService>();
 
         return await serviceManageService.CheckAccess(server.Service, user);
-    }
-
-    public Task<bool> ProcessFileUpload(IServiceProvider provider, User user, Service service, string fileName, Stream stream)
-    {
-        return Task.FromResult(true);
     }
 }

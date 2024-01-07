@@ -105,4 +105,14 @@ public class DummyFileAccess : IFileAccess
     {
         throw new NotImplementedException();
     }
+
+    public IFileAccess Clone()
+    {
+        return new DummyFileAccess();
+    }
+
+    public void Dispose()
+    {
+        // TODO release managed resources here
+    }
 }

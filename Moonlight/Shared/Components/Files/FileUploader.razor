@@ -1,7 +1,9 @@
 @using Moonlight.App.Database.Entities.Store
+@using Moonlight.App.Models.Abstractions.FileAccess
+@using Moonlight.App.Services.Utils
 
 @inject DropzoneService DropzoneService
-@inject FileUploadHelper UploadHelper
+@inject SharedFileAccessService SharedFileAccessService
 
 @implements IDisposable
 
@@ -45,10 +47,7 @@
 @code
 {
     [Parameter]
-    public string Path { get; set; }
-    
-    [Parameter]
-    public Service Service { get; set; }
+    public IFileAccess FileAccess { get; set; }
 
     private CancellationTokenSource Cancellation = new();
     private string DropzoneId;
@@ -62,24 +61,27 @@
     {
         if (firstRender)
         {
-            var url = await UploadHelper.GenerateUploadUrl(Service, Path);
+            await SharedFileAccessService.Register(FileAccess);
+            var url = await SharedFileAccessService.GenerateUrl(FileAccess);
+                
             await DropzoneService.Create(DropzoneId, url);
             
-            Task.Run(async () =>
+            Task.Run(async () => // Update the dropzone url every 5 minutes so the token does not expire
             {
                 while (!Cancellation.IsCancellationRequested)
                 {
-                    await Task.Delay(TimeSpan.FromMinutes(4));
+                    await Task.Delay(TimeSpan.FromMinutes(5));
 
-                    var url = await UploadHelper.GenerateUploadUrl(Service, Path);
-                    await DropzoneService.UpdateUrl(DropzoneId, url);
+                    var newUrl = await SharedFileAccessService.GenerateUrl(FileAccess);
+                    await DropzoneService.UpdateUrl(DropzoneId, newUrl);
                 }
             });
         }
     }
 
-    public void Dispose()
+    public async void Dispose()
     {
         Cancellation.Cancel();
+        await SharedFileAccessService.Unregister(FileAccess);
     }
 }

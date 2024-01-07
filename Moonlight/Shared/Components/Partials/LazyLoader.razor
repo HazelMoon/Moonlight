@@ -67,13 +67,19 @@ else
         await InvokeAsync(StateHasChanged);
     }
 
-    public async Task Reload()
+    // Explanation to preLoadTask:
+    // The preLoadTask runs during the reload function, so while the ui is blocked
+    // by the loading animation, to modify context before the regular load method gets invoked
+    public async Task Reload(Func<LazyLoader, Task>? preLoadTask)
     {
         Loaded = false;
         await InvokeAsync(StateHasChanged);
-
+        
         Task.Run(async () =>
         {
+            if (preLoadTask != null)
+                await preLoadTask.Invoke(this);
+            
             await Load.Invoke(this);
             Loaded = true;
             await InvokeAsync(StateHasChanged);
@@ -82,4 +88,6 @@ else
             if (task.IsFaulted) throw task.Exception ?? new Exception("An unknown error occured");
         });
     }
+
+    public async Task Reload() => await Reload(preLoadTask: null);
 }

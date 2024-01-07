@@ -1,6 +1,6 @@
 namespace Moonlight.App.Models.Abstractions.FileAccess;
 
-public interface IFileAccess
+public interface IFileAccess : IDisposable
 {
     public Task<FileEntry[]> List();
     public Task ChangeDirectory(string relativePath);
@@ -14,4 +14,5 @@ public interface IFileAccess
     public Task WriteFile(string name, string content);
     public Task<Stream> ReadFileStream(string name);
     public Task WriteFileStream(string name, Stream dataStream);
+    public IFileAccess Clone();
 }
