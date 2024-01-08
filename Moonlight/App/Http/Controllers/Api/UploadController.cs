@@ -47,9 +47,6 @@ public class UploadController : Controller
         if (Request.Form.Files.Count > 1)
             return BadRequest("Too many files sent");
 
-        if (ByteSizeValue.FromBytes(Request.Form.Files.First().Length).MegaBytes > 100)
-            return BadRequest("File too large");
-        
         // Validate request
         if (!await JwtService.Validate(uploadToken, JwtType.FileUpload))
             return StatusCode(403);

@@ -39,6 +39,12 @@ Log.Logger = logConfig.CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.ConfigureKestrel(options =>
+{
+    var uploadLimit = ByteSizeValue.FromMegaBytes(configService.Get().WebServer.HttpUploadLimit).Bytes;
+    options.Limits.MaxRequestBodySize = uploadLimit;
+});
+
 // Init plugin system
 var pluginService = new PluginService();
 builder.Services.AddSingleton(pluginService);

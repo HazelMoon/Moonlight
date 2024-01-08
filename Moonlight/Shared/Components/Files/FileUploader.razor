@@ -7,38 +7,42 @@
 
 @implements IDisposable
 
-<div class="dropzone dropzone-queue mb-2" id="@DropzoneId">
-    <div class="dropzone-panel mb-lg-0 mb-2">
-        <div class="card border border-1 border-primary bg-secondary">
-            <div class="card-body">
-                <div class="text-center fs-1 fw-bold">
-                    Drag a file or folder or <a class="dropzone-select">click to upload files</a>
+<div class="d-flex justify-content-center">
+    <div class="col-md-8" @ondrop:preventDefault>
+        <div class="dropzone dropzone-queue" id="@DropzoneId">
+            <div class="dropzone-panel mb-lg-0 mb-2">
+                <div class="card border border-1 border-primary bg-secondary" style="pointer-events: none">
+                    <div class="card-body">
+                        <div class="text-center fs-1 fw-bold">
+                            Drag a file or folder or <a class="dropzone-select" style="pointer-events: all">click to upload files</a>
+                        </div>
+                    </div>
+                    <img src="/svg/upload.svg" class="card-img-bottom" alt="Upload icon" style="max-height: 15vw">
                 </div>
             </div>
-            <img src="/svg/upload.svg" class="card-img-bottom" alt="Upload icon" style="max-height: 15vw; pointer-events: none">
-        </div>
-    </div>
-    <div class="dropzone-items wm-200px">
-        <div class="dropzone-item" style="display:none">
-            <div class="dropzone-file">
-                <div class="dropzone-filename" title="some_image_file_name.jpg">
-                    <span data-dz-name>some_image_file_name.jpg</span>
-                    <strong>(<span data-dz-size>340kb</span>)</strong>
-                </div>
-                <div class="dropzone-error" data-dz-errormessage></div>
-            </div>
-            <div class="dropzone-progress">
-                <div class="progress">
-                    <div
-                        class="progress-bar bg-primary"
-                        role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-dz-uploadprogress>
+            <div class="dropzone-items wm-200px">
+                <div class="dropzone-item" style="display:none">
+                    <div class="dropzone-file">
+                        <div class="dropzone-filename" title="some_image_file_name.jpg">
+                            <span data-dz-name>some_image_file_name.jpg</span>
+                            <strong>(<span data-dz-size>340kb</span>)</strong>
+                        </div>
+                        <div class="dropzone-error" data-dz-errormessage></div>
+                    </div>
+                    <div class="dropzone-progress">
+                        <div class="progress">
+                            <div
+                                class="progress-bar bg-primary"
+                                role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-dz-uploadprogress>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dropzone-toolbar">
+                        <span class="dropzone-delete" data-dz-remove>
+                            <i class="bx bx-x fs-1"></i>
+                        </span>
                     </div>
                 </div>
-            </div>
-            <div class="dropzone-toolbar">
-                <span class="dropzone-delete" data-dz-remove>
-                    <i class="bx bx-x fs-1"></i>
-                </span>
             </div>
         </div>
     </div>
@@ -46,8 +50,7 @@
 
 @code
 {
-    [Parameter]
-    public IFileAccess FileAccess { get; set; }
+    [Parameter] public IFileAccess FileAccess { get; set; }
 
     private CancellationTokenSource Cancellation = new();
     private string DropzoneId;
@@ -63,9 +66,9 @@
         {
             await SharedFileAccessService.Register(FileAccess);
             var url = await SharedFileAccessService.GenerateUrl(FileAccess);
-                
+
             await DropzoneService.Create(DropzoneId, url);
-            
+
             Task.Run(async () => // Update the dropzone url every 5 minutes so the token does not expire
             {
                 while (!Cancellation.IsCancellationRequested)

@@ -1,38 +1,33 @@
 window.moonlight = {
     toasts: {
-        success: function(title, message, timeout)
-        {
+        success: function (title, message, timeout) {
             this.show(title, message, timeout, "success");
         },
-        danger: function(title, message, timeout)
-        {
+        danger: function (title, message, timeout) {
             this.show(title, message, timeout, "danger");
         },
-        warning: function(title, message, timeout)
-        {
+        warning: function (title, message, timeout) {
             this.show(title, message, timeout, "warning");
         },
-        info: function(title, message, timeout)
-        {
+        info: function (title, message, timeout) {
             this.show(title, message, timeout, "info");
         },
-        show: function(title, message, timeout, color)
-        {
+        show: function (title, message, timeout, color) {
             var toast = new ToastHelper(title, message, color, timeout);
             toast.show();
         },
-        
+
         // Progress toasts 
-        progress : {
+        progress: {
             create: function (id, text) {
                 var toast = new ToastHelper("Progress", text, "secondary", 0);
                 toast.showAlways();
-                
+
                 toast.domElement.setAttribute('data-ml-toast-id', id);
             },
             modify: function (id, text) {
                 var toast = document.querySelector('[data-ml-toast-id="' + id + '"]');
-                
+
                 toast.getElementsByClassName("toast-body")[0].innerText = text;
             },
             remove: function (id) {
@@ -46,23 +41,21 @@ window.moonlight = {
         }
     },
     modals: {
-        show: function (id, focus)
-        {
+        show: function (id, focus) {
             let modal = new bootstrap.Modal(document.getElementById(id), {
                 focus: focus
             });
-            
+
             modal.show();
         },
-        hide: function (id)
-        {
+        hide: function (id) {
             let element = document.getElementById(id)
             let modal = bootstrap.Modal.getInstance(element)
             modal.hide()
         }
     },
     alerts: {
-        getHelper: function(){
+        getHelper: function () {
             return Swal.mixin({
                 customClass: {
                     confirmButton: 'btn btn-success',
@@ -133,16 +126,15 @@ window.moonlight = {
         }
     },
     textEditor: {
-        create: function(id)
-        {
+        create: function (id) {
             BalloonEditor
                 .create(document.getElementById(id), {
-                    toolbar: [ 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote' ],
+                    toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote'],
                     heading: {
                         options: [
-                            { model: 'paragraph', title: 'Paragraph', class: 'ck-heading_paragraph' },
-                            { model: 'heading1', view: 'h1', title: 'Heading 1', class: 'ck-heading_heading1' },
-                            { model: 'heading2', view: 'h2', title: 'Heading 2', class: 'ck-heading_heading2' }
+                            {model: 'paragraph', title: 'Paragraph', class: 'ck-heading_paragraph'},
+                            {model: 'heading1', view: 'h1', title: 'Heading 1', class: 'ck-heading_heading1'},
+                            {model: 'heading2', view: 'h2', title: 'Heading 2', class: 'ck-heading_heading2'}
                         ]
                     }
                 })
@@ -150,13 +142,11 @@ window.moonlight = {
                     console.error(error);
                 });
         },
-        get: function (id)
-        {
+        get: function (id) {
             let editor = document.getElementById(id).ckeditorInstance;
             return editor.getData();
         },
-        set: function (id, data)
-        {
+        set: function (id, data) {
             let editor = document.getElementById(id).ckeditorInstance;
             editor.setData(data);
         }
@@ -223,7 +213,7 @@ window.moonlight = {
                 maxFilesize: 100,
                 previewTemplate: previewTemplate,
                 previewsContainer: id + " .dropzone-items",
-                clickable: id + " .dropzone-select",
+                clickable: ".dropzone-panel",
                 createImageThumbnails: false,
                 ignoreHiddenFiles: false,
                 disablePreviews: false
@@ -234,36 +224,28 @@ window.moonlight = {
                 dropzoneItems.forEach(dropzoneItem => {
                     dropzoneItem.style.display = '';
                 });
+
+                // Create a progress bar for the current file
+                var progressBar = dropzone.querySelector('.dropzone-item .progress-bar');
+                progressBar.style.width = "0%";
             });
 
-            // Update the total progress bar
-            fileDropzone.on("totaluploadprogress", function (progress) {
-                const progressBars = dropzone.querySelectorAll('.progress-bar');
-                progressBars.forEach(progressBar => {
-                    progressBar.style.width = progress + "%";
-                });
+// Update the progress bar for each file
+            fileDropzone.on("uploadprogress", function (file, progress, bytesSent) {
+                var dropzoneItem = file.previewElement;
+                var progressBar = dropzoneItem.querySelector('.progress-bar');
+                progressBar.style.width = progress + "%";
             });
 
-            fileDropzone.on("sending", function (file) {
-                // Show the total progress bar when upload starts
-                const progressBars = dropzone.querySelectorAll('.progress-bar');
-                progressBars.forEach(progressBar => {
-                    progressBar.style.opacity = "1";
-                });
-            });
-
-            // Hide the total progress bar when nothing"s uploading anymore
-            fileDropzone.on("complete", function (progress) {
-                const progressBars = dropzone.querySelectorAll('.dz-complete');
+// Hide the progress bar for each file when the upload is complete
+            fileDropzone.on("complete", function (file) {
+                var dropzoneItem = file.previewElement;
+                var progressBar = dropzoneItem.querySelector('.progress-bar');
 
                 setTimeout(function () {
-                    progressBars.forEach(progressBar => {
-                        progressBar.querySelector('.progress-bar').style.opacity = "1";
-                        progressBar.querySelector('.progress').style.opacity = "1";
-
-                        progressBar.querySelector('.progress-bar').classList.remove("bg-primary");
-                        progressBar.querySelector('.progress-bar').classList.add("bg-success");
-                    });
+                    progressBar.style.opacity = "1";
+                    progressBar.classList.remove("bg-primary");
+                    progressBar.classList.add("bg-success");
                 }, 300);
             });
         },

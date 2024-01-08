@@ -13,8 +13,15 @@ public class ConfigV1
     [JsonProperty("Security")] public SecurityData Security { get; set; } = new();
     [JsonProperty("Database")] public DatabaseData Database { get; set; } = new();
     [JsonProperty("MailServer")] public MailServerData MailServer { get; set; } = new();
-
     [JsonProperty("Store")] public StoreData Store { get; set; } = new();
+    [JsonProperty("WebServer")] public WebServerData WebServer { get; set; } = new();
+    
+    public class WebServerData
+    {
+        [JsonProperty("HttpUploadLimit")]
+        [Description("This sets the kestrel upload limit in megabytes. Changing this will need an restart")]
+        public int HttpUploadLimit { get; set; } = 100 * 1024;
+    }
 
     public class StoreData
     {

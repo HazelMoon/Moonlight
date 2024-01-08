@@ -297,7 +297,7 @@
         int i = 0;
         foreach (var entry in entries)
         {
-            await ToastService.ModifyProgress(toastId, $"[{i}/{entries.Length}] Deleting '{entry.Name}'");
+            await ToastService.ModifyProgress(toastId, $"[{i + 1}/{entries.Length}] Deleting '{entry.Name}'");
 
             await FileAccess.Delete(entry.Name);
 
