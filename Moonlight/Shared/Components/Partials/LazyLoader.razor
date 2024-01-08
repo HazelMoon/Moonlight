@@ -1,4 +1,8 @@
-﻿@if (Loaded)
+﻿@inject SessionThreadLock SessionThreadLock
+
+@implements IDisposable
+
+@if (Loaded)
 {
     @ChildContent
 }
@@ -26,19 +30,18 @@ else
 
 @code
 {
-    [Parameter]
-    public RenderFragment ChildContent { get; set; }
+    [Parameter] public RenderFragment ChildContent { get; set; }
 
-    [Parameter]
-    public bool ShowAsCard { get; set; } = false;
+    [Parameter] public bool ShowAsCard { get; set; } = false;
 
-    [Parameter]
-    public Func<LazyLoader, Task> Load { get; set; }
+    [Parameter] public Func<LazyLoader, Task> Load { get; set; }
 
-    [Parameter]
-    public string Text { get; set; } = "";
+    [Parameter] public string Text { get; set; } = "";
+
+    [Parameter] public bool UseThreadLock { get; set; } = true;
 
     private bool Loaded = false;
+    private CancellationTokenSource Cancellation = new();
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -48,16 +51,24 @@ else
             {
                 try
                 {
-                    await Load.Invoke(this);
+                    if (UseThreadLock)
+                    {
+                        lock (SessionThreadLock)
+                            Load.Invoke(this).Wait(Cancellation.Token);
+                    }
+                    else
+                        await Load.Invoke(this);
+                    
                     Loaded = true;
                     await InvokeAsync(StateHasChanged);
                 }
+                catch(OperationCanceledException){ /* can be ignored */ }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e);
-                    throw;
+                    Logger.Warn("Unhanded error on initial load");
+                    Logger.Warn(e);
                 }
-            });
+            }, Cancellation.Token);
         }
     }
 
@@ -74,20 +85,40 @@ else
     {
         Loaded = false;
         await InvokeAsync(StateHasChanged);
-        
-        Task.Run(async () =>
+
+        await Task.Run(async () =>
         {
-            if (preLoadTask != null)
-                await preLoadTask.Invoke(this);
+            if (UseThreadLock)
+            {
+                lock (SessionThreadLock)
+                {
+                    if (preLoadTask != null)
+                        preLoadTask.Invoke(this).Wait(Cancellation.Token);
+                    
+                    Load.Invoke(this).Wait(Cancellation.Token);
+                }
+            }
+            else
+            {
+                if (preLoadTask != null)
+                    await preLoadTask.Invoke(this);
+
+                await Load.Invoke(this);
+            }
             
-            await Load.Invoke(this);
             Loaded = true;
             await InvokeAsync(StateHasChanged);
-        }).ContinueWith(task =>
+        }, Cancellation.Token).ContinueWith(task =>
         {
             if (task.IsFaulted) throw task.Exception ?? new Exception("An unknown error occured");
         });
     }
 
     public async Task Reload() => await Reload(preLoadTask: null);
+
+    public void Dispose()
+    {
+        Cancellation.Cancel();
+        Cancellation.Dispose();
+    }
 }
