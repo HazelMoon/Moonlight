@@ -3,6 +3,7 @@
 @using Moonlight.App.Database.Entities.Store
 
 @inject IJSRuntime JsRuntime
+@inject AlertService AlertService
 
 <div class="card">
     <div class="card-header">
@@ -53,13 +54,13 @@
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
                         <li>
-                            <a class="dropdown-item" href="#">
+                            <a href="#" @onclick:preventDefault @onclick="CreateFile" class="dropdown-item">
                                 <i class="bx bx-sm bx-file text-primary me-2 align-middle"></i>
                                 <span class="align-middle fs-6">File</span>
                             </a>
                         </li>
                         <li>
-                            <a class="dropdown-item" href="#">
+                            <a href="#" @onclick:preventDefault @onclick="CreateDirectory" class="dropdown-item">
                                 <i class="bx bx-sm bx-folder text-primary me-2 align-middle"></i>
                                 <span class="align-middle fs-6">Folder</span>
                             </a>
@@ -88,7 +89,7 @@
 
     private string Path = "/";
     private bool ShowFileUploader = false;
-    private FileView FileView;
+    private FileView? FileView;
     private FileUploader? FileUploader;
 
     private async Task OnPathChanged(string path)
@@ -101,6 +102,9 @@
     {
         if (ShowFileUploader)
             await ToggleFileUploader(false);
+        
+        if(FileView == null)
+            return;
 
         await FileView.NavigateToPath(path);
     }
@@ -111,5 +115,29 @@
     {
         ShowFileUploader = b;
         await InvokeAsync(StateHasChanged);
+    }
+    
+    private async Task CreateFile()
+    {
+        if(FileView == null)
+            return;
+        
+        var name = await AlertService.Text("Enter the filename", "");
+
+        await FileAccess.CreateFile(name);
+
+        await FileView.Refresh();
+    }
+
+    private async Task CreateDirectory()
+    {
+        if(FileView == null)
+            return;
+        
+        var name = await AlertService.Text("Enter the foldername", "");
+
+        await FileAccess.CreateDirectory(name);
+
+        await FileView.Refresh();
     }
 }

@@ -31,9 +31,9 @@ public class AlertService
         await JsRuntime.InvokeVoidAsync("moonlight.alerts.error", title, message);
     }
     
-    public async Task<string> Text(string title, string message)
+    public async Task<string> Text(string title, string message, string initialValue = "")
     {
-        return await JsRuntime.InvokeAsync<string>("moonlight.alerts.text", title, message);
+        return await JsRuntime.InvokeAsync<string>("moonlight.alerts.text", title, message, initialValue);
     }
     
     public async Task<bool> YesNo(string title, string yes, string no)

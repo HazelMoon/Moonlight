@@ -108,18 +108,13 @@ window.moonlight = {
                 }
             })
         },
-        text: function (title, description) {
-            const {value: text} = this.getHelper().fire({
+        text: async function (title, description, initialValue) {
+            const {value: text} = await this.getHelper().fire({
                 title: title,
                 input: 'text',
                 inputLabel: description,
-                inputValue: "",
-                showCancelButton: false,
-                inputValidator: (value) => {
-                    if (!value) {
-                        return 'You need to enter a value'
-                    }
-                }
+                inputValue: initialValue,
+                showCancelButton: false
             })
 
             return text;

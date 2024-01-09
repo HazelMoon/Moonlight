@@ -63,12 +63,10 @@ else
                     await InvokeAsync(StateHasChanged);
                 }
                 catch(OperationCanceledException){ /* can be ignored */ }
-                catch (Exception e)
-                {
-                    Logger.Warn("Unhanded error on initial load");
-                    Logger.Warn(e);
-                }
-            }, Cancellation.Token);
+            }, Cancellation.Token).ContinueWith(task =>
+            {
+                if (task.IsFaulted) throw task.Exception ?? new Exception("An unknown error has occured");
+            });
         }
     }
 
@@ -88,26 +86,30 @@ else
 
         await Task.Run(async () =>
         {
-            if (UseThreadLock)
+            try
             {
-                lock (SessionThreadLock)
+                if (UseThreadLock)
+                {
+                    lock (SessionThreadLock)
+                    {
+                        if (preLoadTask != null)
+                            preLoadTask.Invoke(this).Wait(Cancellation.Token);
+
+                        Load.Invoke(this).Wait(Cancellation.Token);
+                    }
+                }
+                else
                 {
                     if (preLoadTask != null)
-                        preLoadTask.Invoke(this).Wait(Cancellation.Token);
-                    
-                    Load.Invoke(this).Wait(Cancellation.Token);
-                }
-            }
-            else
-            {
-                if (preLoadTask != null)
-                    await preLoadTask.Invoke(this);
+                        await preLoadTask.Invoke(this);
 
-                await Load.Invoke(this);
+                    await Load.Invoke(this);
+                }
+                
+                Loaded = true;
+                await InvokeAsync(StateHasChanged);
             }
-            
-            Loaded = true;
-            await InvokeAsync(StateHasChanged);
+            catch (OperationCanceledException) { /* can be ignored */ }
         }, Cancellation.Token).ContinueWith(task =>
         {
             if (task.IsFaulted) throw task.Exception ?? new Exception("An unknown error occured");

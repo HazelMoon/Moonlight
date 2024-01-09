@@ -1,6 +1,7 @@
 @using Moonlight.App.Models.Abstractions.FileAccess
 
 @inject ToastService ToastService
+@inject AlertService AlertService
 
 <LazyLoader @ref="LazyLoader" Load="Load">
     <table class="w-100 table table-responsive table-row-bordered">
@@ -65,7 +66,6 @@
                 @if (ShowIcons)
                 {
                     <td class="w-10px align-middle">
-                        <i class="bx bx-md bx-folder"></i>
                     </td>
                 }
                 <td class="align-middle fs-6">
@@ -177,7 +177,7 @@
                                 </button>
                                 <ul class="dropdown-menu">
                                     <li>
-                                        <a class="dropdown-item" href="#">Action</a>
+                                        <a href="#" @onclick:preventDefault @onclick="() => Rename(entry)" class="dropdown-item">Rename</a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="#">Another action</a>
@@ -263,29 +263,7 @@
                 await OnFileClicked.Invoke(fileEntry);
         }
     }
-
-    private async Task HandleSelected(FileEntry fileEntry, ChangeEventArgs args)
-    {
-        if (args.Value == null) // This should never be called. Still i want to handle it
-            return;
-
-        if (args.Value.ToString() == "True")
-        {
-            if (!SelectedEntries.Contains(fileEntry))
-                SelectedEntries.Add(fileEntry);
-        }
-        else
-        {
-            if (SelectedEntries.Contains(fileEntry))
-                SelectedEntries.Remove(fileEntry);
-        }
-
-        if (OnSelectionChanged != null)
-            await OnSelectionChanged.Invoke();
-
-        await InvokeAsync(StateHasChanged);
-    }
-
+    
     private async Task Delete(params FileEntry[] entries)
     {
         if (entries.Length == 0)
@@ -310,6 +288,42 @@
         await LazyLoader.Reload();
     }
 
+    private async Task Rename(FileEntry fileEntry)
+    {
+        var name = await AlertService.Text($"Rename '{fileEntry.Name}'", "", fileEntry.Name);
+        
+        if(string.IsNullOrEmpty(name))
+            return;
+
+        await FileAccess.Move(fileEntry.Name, name);
+
+        await LazyLoader.Reload();
+    }
+
+    #region Selection
+
+    private async Task HandleSelected(FileEntry fileEntry, ChangeEventArgs args)
+    {
+        if (args.Value == null) // This should never be called. Still i want to handle it
+            return;
+
+        if (args.Value.ToString() == "True")
+        {
+            if (!SelectedEntries.Contains(fileEntry))
+                SelectedEntries.Add(fileEntry);
+        }
+        else
+        {
+            if (SelectedEntries.Contains(fileEntry))
+                SelectedEntries.Remove(fileEntry);
+        }
+
+        if (OnSelectionChanged != null)
+            await OnSelectionChanged.Invoke();
+
+        await InvokeAsync(StateHasChanged);
+    }
+    
     private async Task ToggleAll(ChangeEventArgs args)
     {
         if (args.Value == null)
@@ -331,6 +345,10 @@
         await InvokeAsync(StateHasChanged);
     }
 
+    #endregion
+
+    #region Navigation
+
     public async Task Navigate(string name)
     {
         await LazyLoader.Reload(async loader =>
@@ -348,4 +366,8 @@
             await FileAccess.SetDirectory(path);
         });
     }
+
+    #endregion
+
+    public async Task Refresh() => await LazyLoader.Reload();
 }
