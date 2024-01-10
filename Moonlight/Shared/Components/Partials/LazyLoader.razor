@@ -1,6 +1,4 @@
-﻿@inject SessionThreadLock SessionThreadLock
-
-@implements IDisposable
+﻿@implements IDisposable
 
 @if (Loaded)
 {
@@ -47,26 +45,10 @@ else
     {
         if (firstRender)
         {
-            await Task.Run(async () =>
-            {
-                try
-                {
-                    if (UseThreadLock)
-                    {
-                        lock (SessionThreadLock)
-                            Load.Invoke(this).Wait(Cancellation.Token);
-                    }
-                    else
-                        await Load.Invoke(this);
-                    
-                    Loaded = true;
-                    await InvokeAsync(StateHasChanged);
-                }
-                catch(OperationCanceledException){ /* can be ignored */ }
-            }, Cancellation.Token).ContinueWith(task =>
-            {
-                if (task.IsFaulted) throw task.Exception ?? new Exception("An unknown error has occured");
-            });
+            await Load.Invoke(this);
+            
+            Loaded = true;
+            await InvokeAsync(StateHasChanged);
         }
     }
 
@@ -84,36 +66,13 @@ else
         Loaded = false;
         await InvokeAsync(StateHasChanged);
 
-        await Task.Run(async () =>
-        {
-            try
-            {
-                if (UseThreadLock)
-                {
-                    lock (SessionThreadLock)
-                    {
-                        if (preLoadTask != null)
-                            preLoadTask.Invoke(this).Wait(Cancellation.Token);
+        if (preLoadTask != null)
+            await preLoadTask.Invoke(this);
 
-                        Load.Invoke(this).Wait(Cancellation.Token);
-                    }
-                }
-                else
-                {
-                    if (preLoadTask != null)
-                        await preLoadTask.Invoke(this);
-
-                    await Load.Invoke(this);
-                }
-                
-                Loaded = true;
-                await InvokeAsync(StateHasChanged);
-            }
-            catch (OperationCanceledException) { /* can be ignored */ }
-        }, Cancellation.Token).ContinueWith(task =>
-        {
-            if (task.IsFaulted) throw task.Exception ?? new Exception("An unknown error occured");
-        });
+        await Load.Invoke(this);
+        
+        Loaded = true;
+        await InvokeAsync(StateHasChanged);
     }
 
     public async Task Reload() => await Reload(preLoadTask: null);

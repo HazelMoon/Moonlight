@@ -56,7 +56,6 @@ builder.Services.AddDbContext<DataContext>();
 
 // Helpers
 builder.Services.AddScoped<NodeRequestHelper>();
-builder.Services.AddScoped<SessionThreadLock>();
 
 // Repositories
 builder.Services.AddScoped(typeof(Repository<>));
