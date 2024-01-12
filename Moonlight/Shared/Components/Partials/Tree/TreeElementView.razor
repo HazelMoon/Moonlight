@@ -1,0 +1,84 @@
+﻿@using Moonlight.App.Models.Abstractions
+
+<div class="row">
+    @for (int i = 0; i < Layer; i++)
+    {
+        <div class="col-sm-1"></div>
+    }
+    @if (Element.Elements.Any())
+    {
+        if (Element.IsExpanded)
+        {
+            <a href="#" @onclick:preventDefault @onclick="ToggleExpanded" class="col-sm-1">
+                <i class="bx bx-sm bxs-minus-square"></i>
+            </a>
+        }
+        else
+        {
+            <a href="#" @onclick:preventDefault @onclick="ToggleExpanded" class="col-sm-1">
+                <i class="bx bx-sm bxs-plus-square"></i>
+            </a>
+        }
+    }
+    else
+    {
+        if (ParentElement != null)
+        {
+            if (ParentElement.Elements.Count > Item)
+            {
+                <div class="col-sm-1">
+                    <i class="bx bx-sm bx-down-arrow-alt"></i>
+                </div>
+            }
+            else
+            {
+                <div class="col-sm-1">
+                    <i class="bx bx-sm bx-subdirectory-right"></i>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-sm-1">
+                <i class="bx bx-sm bx-subdirectory-right"></i>
+            </div>
+        }
+    }
+    <div class="col-sm-1">
+        <i class="@(Element.Icon)"></i>
+    </div>
+    <div class="col-3">
+        <span>@(Element.Name)</span>
+    </div>
+</div>
+
+@if (Element.IsExpanded)
+{
+    int i = 1;
+    int newLayer = Layer + 1;
+
+    foreach (var child in Element.Elements)
+    {
+        <TreeElementView Element="@child" ParentElement="@Element" Item="i" Layer="@newLayer"/>
+
+        i++;
+    }
+}
+
+@code
+{
+    [Parameter] public TreeElement Element { get; set; }
+
+    [Parameter] public int Layer { get; set; } = 0;
+
+    [Parameter] public int Item { get; set; } = 0;
+
+    [Parameter] public TreeElement? ParentElement { get; set; }
+
+    private async Task ToggleExpanded()
+    {
+        Element.IsExpanded = !Element.IsExpanded;
+
+        await InvokeAsync(StateHasChanged);
+    }
+}

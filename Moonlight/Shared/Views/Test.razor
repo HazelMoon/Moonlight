@@ -1,0 +1,42 @@
+﻿@page "/test"
+
+@using Moonlight.Shared.Components.Partials.Tree
+@using Moonlight.App.Models.Abstractions
+
+<TreeView RootElement="Tree" />
+
+@code
+{
+    private TreeElement Tree;
+
+    protected override void OnInitialized()
+    {
+        Tree = new("Datacenters");
+
+        var dc1 = new TreeElement("Datacenter 01");
+
+        var dc1Server1 = new TreeElement("Server 1");
+        var dc1Server2 = new TreeElement("Server 2");
+        
+        dc1.Elements.AddRange(new []{dc1Server1, dc1Server2});
+        
+        var dc2 = new TreeElement("Datacenter 02");
+
+        var dc2Server1 = new TreeElement("Server 1");
+        var dc2Server2 = new TreeElement("Server 2");
+        
+        dc2.Elements.AddRange(new []{dc2Server1, dc2Server2});
+
+        var webSpaces = new TreeElement("Webspaces");
+
+        var dc2WebSpace1 = new TreeElement("Webspace 1");
+        var dc2WebSpace2 = new TreeElement("Webspace 2");
+        
+        webSpaces.Elements.AddRange(new []{dc2WebSpace1, dc2WebSpace2});
+        
+        dc2.Elements.Add(webSpaces);
+        
+        Tree.Elements.Add(dc1);
+        Tree.Elements.Add(dc2);
+    }
+}
