@@ -7,59 +7,67 @@ namespace Moonlight.App.Helpers.FileAccesses;
 
 public class FtpFileAccess : IFileAccess
 {
-    private readonly FtpClient Client;
+    private FtpClient Client;
     private string CurrentDirectory = "/";
 
-    private string Host;
-    private int Port;
-    private string Username;
-    private string Password;
+    private readonly string Host;
+    private readonly int Port;
+    private readonly string Username;
+    private readonly string Password;
+    private readonly int OperationTimeout;
 
-    public FtpFileAccess(string host, int port, string username, string password)
+    public FtpFileAccess(string host, int port, string username, string password, int operationTimeout = 5)
     {
         Host = host;
         Port = port;
         Username = username;
         Password = password;
-        
-        Client = new FtpClient();
-        Client.Host = Host;
-        Client.Port = Port;
-        Client.Credentials = new NetworkCredential(Username, Password);
-        Client.Config.DataConnectionType = FtpDataConnectionType.PASV;
+        OperationTimeout = (int)TimeSpan.FromSeconds(5).TotalMilliseconds;
+
+        Client = CreateClient();
     }
 
     public async Task<FileEntry[]> List()
     {
-        await EnsureConnected();
-
-        var items = Client.GetListing() ?? Array.Empty<FtpListItem>();
-        return items.Select(item => new FileEntry
+        return await ExecuteHandled(() =>
         {
-            Name = item.Name,
-            IsDirectory = item.Type == FtpObjectType.Directory,
-            IsFile = item.Type == FtpObjectType.File,
-            LastModifiedAt = item.Modified,
-            Size = item.Size
-        }).ToArray();
+            var items = Client.GetListing() ?? Array.Empty<FtpListItem>();
+            var result = items.Select(item => new FileEntry
+            {
+                Name = item.Name,
+                IsDirectory = item.Type == FtpObjectType.Directory,
+                IsFile = item.Type == FtpObjectType.File,
+                LastModifiedAt = item.Modified,
+                Size = item.Size
+            }).ToArray();
+            
+            return Task.FromResult(result);
+        });
     }
 
     public async Task ChangeDirectory(string relativePath)
     {
-        await EnsureConnected();
+        await ExecuteHandled(() =>
+        {
+            var newPath = Path.Combine(CurrentDirectory, relativePath);
+            newPath = Path.GetFullPath(newPath);
 
-        var newPath = Path.Combine(CurrentDirectory, relativePath);
-        newPath = Path.GetFullPath(newPath);
+            Client.SetWorkingDirectory(newPath);
+            CurrentDirectory = Client.GetWorkingDirectory();
 
-        Client.SetWorkingDirectory(newPath);
-        CurrentDirectory = Client.GetWorkingDirectory();
+            return Task.CompletedTask;
+        });
     }
 
     public async Task SetDirectory(string path)
     {
-        await EnsureConnected();
-
-        Client.SetWorkingDirectory(path);
+        await ExecuteHandled(() =>
+        {
+            Client.SetWorkingDirectory(path);
+            CurrentDirectory = Client.GetWorkingDirectory();
+            
+            return Task.CompletedTask;
+        });
     }
 
     public Task<string> GetCurrentDirectory()
@@ -69,67 +77,99 @@ public class FtpFileAccess : IFileAccess
 
     public async Task Delete(string path)
     {
-        await EnsureConnected();
+        await ExecuteHandled(() =>
+        {
+            if (Client.FileExists(path))
+                Client.DeleteFile(path);
+            else
+                Client.DeleteDirectory(path);
 
-        if (Client.FileExists(path))
-            Client.DeleteFile(path);
-        else
-            Client.DeleteDirectory(path);
+            return Task.CompletedTask;
+        });
     }
 
     public async Task Move(string from, string to)
     {
-        await EnsureConnected();
-
-        Client.Rename(from, to);
+        await ExecuteHandled(() =>
+        {
+            Client.Rename(from, to);
+            return Task.CompletedTask;
+        });
     }
 
     public async Task CreateDirectory(string name)
     {
-        await EnsureConnected();
-
-        Client.CreateDirectory(name);
+        await ExecuteHandled(() =>
+        {
+            Client.CreateDirectory(name);
+            return Task.CompletedTask;
+        });
     }
 
     public async Task CreateFile(string name)
     {
-        await EnsureConnected();
+        await ExecuteHandled(() =>
+        {
+            using var stream = new MemoryStream();
+            Client.UploadStream(stream, name);
 
-        using var stream = new MemoryStream();
-        Client.UploadStream(stream, name);
+            return Task.CompletedTask;
+        });
     }
 
     public async Task<string> ReadFile(string name)
     {
-        await EnsureConnected();
-
-        await using var stream = Client.OpenRead(name);
-        using var reader = new StreamReader(stream, Encoding.UTF8);
-        return await reader.ReadToEndAsync();
+        return await ExecuteHandled(async () =>
+        {
+            await using var stream = Client.OpenRead(name);
+            using var reader = new StreamReader(stream, Encoding.UTF8);
+            return await reader.ReadToEndAsync();
+        });
     }
 
     public async Task WriteFile(string name, string content)
     {
-        await EnsureConnected();
+        await ExecuteHandled(() =>
+        {
+            using var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
+            Client.UploadStream(stream, name);
 
-        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
-        Client.UploadStream(stream, name);
+            return Task.CompletedTask;
+        });
     }
 
     public async Task<Stream> ReadFileStream(string name)
     {
-        await EnsureConnected();
-
-        return Client.OpenRead(name);
+        return await ExecuteHandled(() =>
+        {
+            var stream = Client.OpenRead(name);
+            return Task.FromResult(stream);
+        });
     }
 
     public async Task WriteFileStream(string name, Stream dataStream)
     {
-        await EnsureConnected();
-        
-        Client.UploadStream(dataStream, name, FtpRemoteExists.Overwrite);
+        await ExecuteHandled(() =>
+        {
+            Client.UploadStream(dataStream, name, FtpRemoteExists.Overwrite);
+            return Task.CompletedTask;
+        });
+    }
+    
+    public IFileAccess Clone()
+    {
+        return new FtpFileAccess(Host, Port, Username, Password)
+        {
+            CurrentDirectory = CurrentDirectory
+        };
     }
 
+    public void Dispose()
+    {
+        Client.Dispose();
+    }
+
+    #region Helpers
 
     private Task EnsureConnected()
     {
@@ -146,16 +186,59 @@ public class FtpFileAccess : IFileAccess
         return Task.CompletedTask;
     }
     
-    public IFileAccess Clone()
+    private async Task ExecuteHandled(Func<Task> func)
     {
-        return new FtpFileAccess(Host, Port, Username, Password)
+        try
         {
-            CurrentDirectory = CurrentDirectory
-        };
+            await EnsureConnected();
+            await func.Invoke();
+        }
+        catch (TimeoutException)
+        {
+            Client.Dispose();
+            Client = CreateClient();
+
+            await EnsureConnected();
+            
+            await func.Invoke();
+        }
+    }
+    
+    private async Task<T> ExecuteHandled<T>(Func<Task<T>> func)
+    {
+        try
+        {
+            await EnsureConnected();
+            return await func.Invoke();
+        }
+        catch (TimeoutException)
+        {
+            Client.Dispose();
+            Client = CreateClient();
+
+            await EnsureConnected();
+
+            return await func.Invoke();
+        }
+    }
+    
+    
+
+    private FtpClient CreateClient()
+    {
+        var client = new FtpClient();
+        client.Host = Host;
+        client.Port = Port;
+        client.Credentials = new NetworkCredential(Username, Password);
+        client.Config.DataConnectionType = FtpDataConnectionType.PASV;
+
+        client.Config.ConnectTimeout = OperationTimeout;
+        client.Config.ReadTimeout = OperationTimeout;
+        client.Config.DataConnectionConnectTimeout = OperationTimeout;
+        client.Config.DataConnectionReadTimeout = OperationTimeout;
+
+        return client;
     }
 
-    public void Dispose()
-    {
-        Client.Dispose();
-    }
+    #endregion
 }

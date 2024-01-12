@@ -355,6 +355,9 @@
         {
             await loader.SetText("Switching directory on target");
             await FileAccess.ChangeDirectory(name);
+            
+            if (OnPathChanged != null)
+                await OnPathChanged.Invoke(await FileAccess.GetCurrentDirectory());
         });
     }
 
@@ -364,6 +367,9 @@
         {
             await loader.SetText("Switching directory on target");
             await FileAccess.SetDirectory(path);
+            
+            if (OnPathChanged != null)
+                await OnPathChanged.Invoke(await FileAccess.GetCurrentDirectory());
         });
     }
 
