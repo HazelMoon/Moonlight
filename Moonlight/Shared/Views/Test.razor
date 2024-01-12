@@ -3,7 +3,16 @@
 @using Moonlight.Shared.Components.Partials.Tree
 @using Moonlight.App.Models.Abstractions
 
-<TreeView RootElement="Tree" />
+<div class="row">
+    <div class="col-md-3">
+        <div class="card card-body">
+            <TreeView RootElement="Tree" />
+        </div>
+    </div>
+    <div class="col-md-9">
+        
+    </div>
+</div>
 
 @code
 {
@@ -13,24 +22,30 @@
     {
         Tree = new("Datacenters");
 
-        var dc1 = new TreeElement("Datacenter 01");
+        var dc1 = new TreeElement("Datacenter 01", "bx bx-sm bx-layer");
 
-        var dc1Server1 = new TreeElement("Server 1");
-        var dc1Server2 = new TreeElement("Server 2");
-        
-        dc1.Elements.AddRange(new []{dc1Server1, dc1Server2});
-        
-        var dc2 = new TreeElement("Datacenter 02");
+        var dc1Server1 = new TreeElement("Server 1", "bx bx-sm bx-server");
+        var dc1Server2 = new TreeElement("Server 2", "bx bx-sm bx-server");
 
-        var dc2Server1 = new TreeElement("Server 1");
-        var dc2Server2 = new TreeElement("Server 2");
+        var databases = new TreeElement("Databases");
+
+        var dc1Db1 = new TreeElement("Database 1", "bx bx-sm bx-data");
+        
+        databases.Elements.Add(dc1Db1);
+        
+        dc1.Elements.AddRange(new []{dc1Server1, dc1Server2, databases});
+        
+        var dc2 = new TreeElement("Datacenter 02", "bx bx-sm bx-layer");
+
+        var dc2Server1 = new TreeElement("Server 1", "bx bx-sm bx-server");
+        var dc2Server2 = new TreeElement("Server 2", "bx bx-sm bx-server");
         
         dc2.Elements.AddRange(new []{dc2Server1, dc2Server2});
 
         var webSpaces = new TreeElement("Webspaces");
 
-        var dc2WebSpace1 = new TreeElement("Webspace 1");
-        var dc2WebSpace2 = new TreeElement("Webspace 2");
+        var dc2WebSpace1 = new TreeElement("Webspace 1", "bx bx-sm bx-globe");
+        var dc2WebSpace2 = new TreeElement("Webspace 2", "bx bx-sm bx-globe");
         
         webSpaces.Elements.AddRange(new []{dc2WebSpace1, dc2WebSpace2});
         

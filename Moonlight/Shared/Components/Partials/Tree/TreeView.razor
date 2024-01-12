@@ -1,11 +1,10 @@
 ﻿@using Moonlight.App.Models.Abstractions
 
-<div class="">
-    <TreeElementView Element="@RootElement" Layer="0" Item="0" />
+<div>
+    <TreeElementView Element="@RootElement" Layer="0" Item="0"/>
 </div>
 
 @code
 {
-    [Parameter]
-    public TreeElement RootElement { get; set; }
+    [Parameter] public TreeElement RootElement { get; set; }
 }

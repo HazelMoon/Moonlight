@@ -1,53 +1,56 @@
 ﻿@using Moonlight.App.Models.Abstractions
 
-<div class="row">
-    @for (int i = 0; i < Layer; i++)
+<div class="d-flex flex-row">
+    @for (int i = 1; i < Layer; i++)
     {
-        <div class="col-sm-1"></div>
+        if (i >= SkipLayersPosition && (SkipLayersLength - (i - SkipLayersPosition)) > 0)
+        {
+            <div class="ms-1 py-2 ps-5 pe-1"></div>
+        }
+        else
+        {
+            <div class="ms-1 py-2 ps-5 pe-1" style="background-image: url('svg/line.svg'); background-repeat: no-repeat; background-size: cover; background-position: center"></div>
+        }
+    }
+    @if (ParentElement != null)
+    {
+        if (ParentElement.Elements.Count > Item)
+        {
+            <div class="ms-1 py-2 ps-5 pe-1" style="background-image: url('svg/lineSide.svg'); background-repeat: no-repeat; background-size: cover; background-position: center"></div>
+        }
+        else
+        {
+            <div class="ms-1 py-2 ps-5 pe-1" style="background-image: url('svg/side.svg'); background-repeat: no-repeat; background-size: cover; background-position: center"></div>
+        }
     }
     @if (Element.Elements.Any())
     {
-        if (Element.IsExpanded)
-        {
-            <a href="#" @onclick:preventDefault @onclick="ToggleExpanded" class="col-sm-1">
-                <i class="bx bx-sm bxs-minus-square"></i>
-            </a>
-        }
-        else
-        {
-            <a href="#" @onclick:preventDefault @onclick="ToggleExpanded" class="col-sm-1">
-                <i class="bx bx-sm bxs-plus-square"></i>
-            </a>
-        }
-    }
-    else
-    {
-        if (ParentElement != null)
-        {
-            if (ParentElement.Elements.Count > Item)
+        <div class="ps-1 py-2">
+            @if (Element.IsExpanded)
             {
-                <div class="col-sm-1">
-                    <i class="bx bx-sm bx-down-arrow-alt"></i>
-                </div>
+                <a href="#" @onclick:preventDefault @onclick="ToggleExpanded">
+                    <i class="bx bx-sm bxs-minus-square text-white"></i>
+                </a>
             }
             else
             {
-                <div class="col-sm-1">
-                    <i class="bx bx-sm bx-subdirectory-right"></i>
-                </div>
+                <a href="#" @onclick:preventDefault @onclick="ToggleExpanded">
+                    <i class="bx bx-sm bxs-plus-square text-white"></i>
+                </a>
             }
-        }
-        else
-        {
-            <div class="col-sm-1">
-                <i class="bx bx-sm bx-subdirectory-right"></i>
-            </div>
-        }
+        </div>
     }
-    <div class="col-sm-1">
-        <i class="@(Element.Icon)"></i>
-    </div>
-    <div class="col-3">
+    else
+    {
+
+    }
+    @if (!string.IsNullOrEmpty(Element.Icon))
+    {
+        <div class="ps-1 py-2">
+            <i class="@(Element.Icon)"></i>
+        </div>
+    }
+    <div class="ps-1 py-2">
         <span>@(Element.Name)</span>
     </div>
 </div>
@@ -56,10 +59,12 @@
 {
     int i = 1;
     int newLayer = Layer + 1;
+    int layerToSkip = SkipLayersPosition + (ParentElement != null && ParentElement.Elements.Count > Item ? 0 : 1);
+    int skipLayerPosition = SkipLayersPosition + 1;
 
     foreach (var child in Element.Elements)
     {
-        <TreeElementView Element="@child" ParentElement="@Element" Item="i" Layer="@newLayer"/>
+        <TreeElementView Element="@child" ParentElement="@Element" Item="i" Layer="@newLayer" SkipLayersPosition="@skipLayerPosition" SkipLayersLength="@layerToSkip"/>
 
         i++;
     }
@@ -74,6 +79,9 @@
     [Parameter] public int Item { get; set; } = 0;
 
     [Parameter] public TreeElement? ParentElement { get; set; }
+    
+    [Parameter] public int SkipLayersPosition { get; set; } = 0;
+    [Parameter] public int SkipLayersLength { get; set; } = 0;
 
     private async Task ToggleExpanded()
     {
