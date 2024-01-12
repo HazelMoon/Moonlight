@@ -247,5 +247,56 @@ window.moonlight = {
         updateUrl: function (elementId, url) {
             Dropzone.forElement("#" + elementId).options.url = url;
         }
+    },
+    editor: {
+        instance: {},
+        
+        create: function (mount, theme, mode, initialContent, lines, fontSize) {
+            this.instance = ace.edit(mount);
+
+            this.instance.setTheme("ace/theme/" + theme);
+            this.instance.session.setMode("ace/mode/" + mode);
+            this.instance.setShowPrintMargin(false);
+            this.instance.setOptions({
+                minLines: lines,
+                maxLines: lines
+            });
+            
+            this.instance.setValue(initialContent);
+            this.instance.setFontSize(fontSize);
+        },
+        
+        setValue: function (content) {
+            this.instance.setValue(content);
+            this.instance.moveCursorTo(0);
+        },
+        
+        getValue: function () {
+            return this.instance.getValue();
+        },
+        
+        setMode: function (mode) {
+            this.instance.session.setMode("ace/mode/" + mode);
+        }
+    },
+    hotkeys: {
+        registerListener: function (dotNetObjRef) {
+            moonlight.hotkeys.listener = (event) => {
+                // Because we dont want too much traffic and not spy on the user,
+                // we define the hotkeys here, in order to filter them before sending the
+                // key input to moonlight. This gives browser plugins also the ability to
+                // add custom shortcuts and hotkeys
+
+                if (event.code === "KeyS" && event.ctrlKey) {
+                    event.preventDefault();
+                    dotNetObjRef.invokeMethodAsync('OnHotkeyPressed', "save");
+                }
+            };
+
+            window.addEventListener('keydown', moonlight.hotkeys.listener);
+        },
+        unregisterListener: function () {
+            window.removeEventListener('keydown', moonlight.hotkeys.listener);
+        }
     }
 }

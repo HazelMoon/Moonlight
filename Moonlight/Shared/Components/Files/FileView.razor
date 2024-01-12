@@ -283,7 +283,7 @@
         }
 
         await ToastService.RemoveProgress(toastId);
-        await ToastService.Success($"Successfully deleted {i} items");
+        await ToastService.Success($"Successfully deleted {i} item(s)");
 
         await LazyLoader.Reload();
     }

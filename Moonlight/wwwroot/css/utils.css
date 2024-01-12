@@ -45,3 +45,8 @@
         box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
     }
 }
+
+.ace_editor {
+    margin: 0;
+    border-radius: 0.475rem;
+}

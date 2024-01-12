@@ -73,6 +73,8 @@ builder.Services.AddScoped<AlertService>();
 builder.Services.AddScoped<FileDownloadService>();
 builder.Services.AddScoped<ClipboardService>();
 builder.Services.AddScoped<DropzoneService>();
+builder.Services.AddScoped<EditorService>();
+builder.Services.AddScoped<HotKeyService>();
 
 // Services / Store
 builder.Services.AddScoped<StoreService>();

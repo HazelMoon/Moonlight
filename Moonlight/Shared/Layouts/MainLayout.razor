@@ -14,6 +14,7 @@
 @inject SessionService SessionService
 @inject NavigationManager Navigation
 @inject ConnectionService ConnectionService
+@inject HotKeyService HotKeyService
 
 @{
     var url = new Uri(Navigation.Uri);
@@ -147,6 +148,8 @@ else
             };
 
             await SessionService.Register(MySession);
+
+            await HotKeyService.Initialize();
 
             Initialized = true;
 

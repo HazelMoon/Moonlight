@@ -22,7 +22,10 @@
     <link href="/css/sweetalert2dark.css" rel="stylesheet" type="text/css"/>
     <link href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700" rel="stylesheet" type="text/css">
     
-    <link href="/_content/XtermBlazor/XtermBlazor.css" rel="stylesheet" />
+    <link href="/_content/XtermBlazor/XtermBlazor.css" rel="stylesheet" type="text/css" />
+    
+    <link href="/editor/ace.css" rel="stylesheet" type="text/css"/>
+    <link href="/editor/dracula.css"/>
 </head>
 <body data-kt-app-header-fixed="true"
       data-kt-app-header-fixed-mobile="true"
@@ -54,6 +57,8 @@ window.XtermBlazor.registerAddon("xterm-addon-fit", new window.FitAddon.FitAddon
 window.XtermBlazor.registerAddon("xterm-addon-web-links", new window.WebLinksAddon.WebLinksAddon());
 window.XtermBlazor.registerAddon("xterm-addon-search", new window.SearchAddon.SearchAddon());
 </script>
+
+<script src="/editor/ace.js"></script>
 
 <script src="/_framework/blazor.server.js"></script>
 </body>

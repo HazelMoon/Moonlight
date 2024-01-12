@@ -1,9 +1,12 @@
 @using Moonlight.App.Models.Abstractions.FileAccess
 @using Microsoft.AspNetCore.Components.Forms
 @using Moonlight.App.Database.Entities.Store
+@using Moonlight.App.Services
 
 @inject IJSRuntime JsRuntime
 @inject AlertService AlertService
+@inject ConfigService ConfigService
+@inject ToastService ToastService
 
 <div class="card">
     <div class="card-header">
@@ -75,9 +78,13 @@
         {
             <FileUploader @ref="FileUploader" FileAccess="FileAccess" />
         }
+        else if(ShowFileEditor)
+        {
+            <FileEditor File="EditorOpenFile" FileAccess="FileAccess" OnClosed="OnEditorClosed" />
+        }
         else
         {
-            <FileView @ref="FileView" FileAccess="FileAccess" OnPathChanged="OnPathChanged"/>
+            <FileView @ref="FileView" FileAccess="FileAccess" OnPathChanged="OnPathChanged" OnFileClicked="OnFileClicked"/>
         }
     </div>
 </div>
@@ -87,10 +94,17 @@
     [Parameter] public IFileAccess FileAccess { get; set; }
     [Parameter] public Service Service { get; set; }
 
+    // Navigation
     private string Path = "/";
-    private bool ShowFileUploader = false;
     private FileView? FileView;
+    
+    // Uploading
+    private bool ShowFileUploader = false;
     private FileUploader? FileUploader;
+    
+    // Editing
+    private bool ShowFileEditor = false;
+    private FileEntry EditorOpenFile;
 
     private async Task OnPathChanged(string path)
     {
@@ -127,6 +141,16 @@
         await FileAccess.CreateFile(name);
 
         await FileView.Refresh();
+
+        // Open editor to start editing
+        await OpenEditor(new FileEntry()
+        {
+            Size = 0,
+            Name = name,
+            IsFile = true,
+            IsDirectory = false,
+            LastModifiedAt = DateTime.UtcNow
+        });
     }
 
     private async Task CreateDirectory()
@@ -139,5 +163,30 @@
         await FileAccess.CreateDirectory(name);
 
         await FileView.Refresh();
+    }
+
+    private async Task OnFileClicked(FileEntry fileEntry) => await OpenEditor(fileEntry);
+
+    private async Task OpenEditor(FileEntry fileEntry)
+    {
+        var fileSizeInKilobytes = ByteSizeValue.FromBytes(fileEntry.Size).KiloBytes;
+        
+        if (fileSizeInKilobytes > ConfigService.Get().FileManager.MaxFileOpenSize)
+        {
+            await ToastService.Danger("Unable to open file as it exceeds the max file size limit");
+            return;
+        }
+        
+        EditorOpenFile = fileEntry;
+        
+        // Prepare editor
+        ShowFileEditor = true;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnEditorClosed()
+    {
+        ShowFileEditor = false;
+        await InvokeAsync(StateHasChanged);
     }
 }

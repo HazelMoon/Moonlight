@@ -15,6 +15,15 @@ public class ConfigV1
     [JsonProperty("MailServer")] public MailServerData MailServer { get; set; } = new();
     [JsonProperty("Store")] public StoreData Store { get; set; } = new();
     [JsonProperty("WebServer")] public WebServerData WebServer { get; set; } = new();
+    [JsonProperty("FileManager")] public FileManagerData FileManager { get; set; } = new();
+    
+    public class FileManagerData
+    {
+        [JsonProperty("MaxFileOpenSize")]
+        [Description(
+            "This specifies the maximum file size a user will be able to open in the file editor in kilobytes")]
+        public int MaxFileOpenSize { get; set; } = 1024 * 5; // 5 MB
+    }
     
     public class WebServerData
     {
