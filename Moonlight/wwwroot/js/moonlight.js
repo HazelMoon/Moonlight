@@ -291,6 +291,11 @@ window.moonlight = {
                     event.preventDefault();
                     dotNetObjRef.invokeMethodAsync('OnHotkeyPressed', "save");
                 }
+
+                if (event.code === "KeyX" && event.ctrlKey) {
+                    event.preventDefault();
+                    dotNetObjRef.invokeMethodAsync('OnHotkeyPressed', "close");
+                }
             };
 
             window.addEventListener('keydown', moonlight.hotkeys.listener);
