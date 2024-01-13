@@ -92,7 +92,15 @@ public class FtpFileAccess : IFileAccess
     {
         await ExecuteHandled(() =>
         {
-            Client.Rename(from, to);
+            var fromEntry = Client.GetObjectInfo(from);
+
+            if (fromEntry.Type == FtpObjectType.Directory)
+                // We need to add the folder name here, because some ftp servers would refuse to move the folder if its missing
+                Client.MoveDirectory(from, to + Path.GetFileName(from));
+            else
+                // We need to add the file name here, because some ftp servers would refuse to move the file if its missing
+                Client.MoveFile(from, to + Path.GetFileName(from));
+            
             return Task.CompletedTask;
         });
     }

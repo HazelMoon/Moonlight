@@ -179,9 +179,12 @@
                                     <li>
                                         <a href="#" @onclick:preventDefault @onclick="() => Rename(entry)" class="dropdown-item">Rename</a>
                                     </li>
-                                    <li>
-                                        <a class="dropdown-item" href="#">Another action</a>
-                                    </li>
+                                    @if (OnMoveRequested != null)
+                                    {
+                                        <li>
+                                            <a href="#" @onclick:preventDefault @onclick="() => RequestMove(entry)" class="dropdown-item">Move</a>
+                                        </li>
+                                    }
                                     <li>
                                         <a class="dropdown-item" href="#">Something else here</a>
                                     </li>
@@ -213,6 +216,7 @@
     [Parameter] public Func<FileEntry, Task>? OnFileClicked { get; set; }
     [Parameter] public Func<Task>? OnSelectionChanged { get; set; }
     [Parameter] public Func<string, Task>? OnPathChanged { get; set; }
+    [Parameter] public Func<FileEntry, Task>? OnMoveRequested { get; set; }
 
     public readonly List<FileEntry> SelectedEntries = new();
 
@@ -298,6 +302,14 @@
         await FileAccess.Move(fileEntry.Name, name);
 
         await LazyLoader.Reload();
+    }
+
+    private async Task RequestMove(FileEntry fileEntry)
+    {
+        if(OnMoveRequested == null)
+            return;
+
+        await OnMoveRequested.Invoke(fileEntry);
     }
 
     #region Selection

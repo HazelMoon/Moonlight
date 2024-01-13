@@ -76,18 +76,44 @@
     <div class="card-body" @ondragenter="() => ToggleFileUploader(true)">
         @if (ShowFileUploader)
         {
-            <FileUploader @ref="FileUploader" FileAccess="FileAccess" />
+            <FileUploader @ref="FileUploader" FileAccess="FileAccess"/>
         }
-        else if(ShowFileEditor)
+        else if (ShowFileEditor)
         {
-            <FileEditor File="EditorOpenFile" FileAccess="FileAccess" OnClosed="OnEditorClosed" />
+            <FileEditor File="EditorOpenFile" FileAccess="FileAccess" OnClosed="OnEditorClosed"/>
         }
         else
         {
-            <FileView @ref="FileView" FileAccess="FileAccess" OnPathChanged="OnPathChanged" OnFileClicked="OnFileClicked"/>
+            <FileView @ref="FileView"
+                      FileAccess="FileAccess"
+                      OnPathChanged="OnPathChanged"
+                      OnFileClicked="OnFileClicked"
+                      OnMoveRequested="StartMove"/>
         }
     </div>
 </div>
+
+<SmartModal @ref="MoveModal" CssClasses="modal-dialog-centered">
+    <div class="modal-header">
+        <h5 class="modal-title">Select the location to move '@(MoveEntry.Name)'</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+    <div class="modal-body" style="overflow-y: scroll; max-height: 80vh">
+        <FileView
+            FileAccess="MoveAccess"
+            ShowActions="false"
+            ShowHeader="false"
+            ShowSelect="false"
+            ShowSize="false"
+            ShowLastModified="false"/>
+    </div>
+    <div class="modal-footer p-3">
+        <div class="btn-group w-100">
+            <WButton OnClick="FinishMove" Text="Move" CssClasses="btn btn-primary w-50 me-3"/>
+            <button class="btn btn-secondary w-50" data-bs-dismiss="modal">Cancel</button>
+        </div>
+    </div>
+</SmartModal>
 
 @code
 {
@@ -97,14 +123,19 @@
     // Navigation
     private string Path = "/";
     private FileView? FileView;
-    
+
     // Uploading
     private bool ShowFileUploader = false;
     private FileUploader? FileUploader;
-    
+
     // Editing
     private bool ShowFileEditor = false;
     private FileEntry EditorOpenFile;
+
+    // Move
+    private FileEntry MoveEntry;
+    private SmartModal MoveModal;
+    private IFileAccess MoveAccess;
 
     private async Task OnPathChanged(string path)
     {
@@ -116,12 +147,14 @@
     {
         if (ShowFileUploader)
             await ToggleFileUploader(false);
-        
-        if(FileView == null)
+
+        if (FileView == null)
             return;
 
         await FileView.NavigateToPath(path);
     }
+
+    #region Uploader
 
     private async Task ToggleFileUploader() => await ToggleFileUploader(!ShowFileUploader);
 
@@ -130,12 +163,16 @@
         ShowFileUploader = b;
         await InvokeAsync(StateHasChanged);
     }
-    
+
+    #endregion
+
+    #region mkdir / touch
+
     private async Task CreateFile()
     {
-        if(FileView == null)
+        if (FileView == null)
             return;
-        
+
         var name = await AlertService.Text("Enter the filename", "");
 
         await FileAccess.CreateFile(name);
@@ -155,9 +192,9 @@
 
     private async Task CreateDirectory()
     {
-        if(FileView == null)
+        if (FileView == null)
             return;
-        
+
         var name = await AlertService.Text("Enter the foldername", "");
 
         await FileAccess.CreateDirectory(name);
@@ -165,20 +202,24 @@
         await FileView.Refresh();
     }
 
+    #endregion
+
+    #region Editor
+
     private async Task OnFileClicked(FileEntry fileEntry) => await OpenEditor(fileEntry);
 
     private async Task OpenEditor(FileEntry fileEntry)
     {
         var fileSizeInKilobytes = ByteSizeValue.FromBytes(fileEntry.Size).KiloBytes;
-        
+
         if (fileSizeInKilobytes > ConfigService.Get().FileManager.MaxFileOpenSize)
         {
             await ToastService.Danger("Unable to open file as it exceeds the max file size limit");
             return;
         }
-        
+
         EditorOpenFile = fileEntry;
-        
+
         // Prepare editor
         ShowFileEditor = true;
         await InvokeAsync(StateHasChanged);
@@ -189,4 +230,40 @@
         ShowFileEditor = false;
         await InvokeAsync(StateHasChanged);
     }
+
+    #endregion
+
+    #region Move
+
+    private async Task StartMove(FileEntry fileEntry)
+    {
+        MoveEntry = fileEntry;
+        MoveAccess = FileAccess.Clone();
+
+        await MoveAccess.SetDirectory("/");
+        await MoveModal.Show();
+    }
+
+    private async Task FinishMove()
+    {
+        var pathToMove = await MoveAccess.GetCurrentDirectory();
+        MoveAccess.Dispose();
+        
+        // Ensure path ends with a /
+        if (!pathToMove.EndsWith("/"))
+            pathToMove += "/";
+
+        // Perform move and process ui updates
+        await FileAccess.Move(MoveEntry.Name, pathToMove);
+
+        await MoveModal.Hide();
+
+        if (FileView == null)
+            return;
+
+        await FileView.Refresh();
+    }
+
+    #endregion
+
 }
