@@ -14,6 +14,7 @@ public class ServerServiceDefinition : ServiceDefinition
 
         context.AddPage<UserPages.Overview>("Overview", "/", "bx bx-sm bxs-dashboard");
         context.AddPage<UserPages.Console>("Console", "/console", "bx bx-sm bxs-terminal");
+        context.AddPage<UserPages.Files>("Files", "/files", "bx bx-sm bx-folder");
         context.AddPage<UserPages.Reset>("Reset", "/reset", "bx bx-sm bx-revision");
         
         return Task.CompletedTask;

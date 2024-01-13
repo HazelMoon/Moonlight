@@ -1,0 +1,48 @@
+@using Moonlight.App.Database.Entities.Store
+@using Moonlight.App.Database.Entities.Servers
+@using Moonlight.App.Helpers.FileAccesses
+@using Moonlight.App.Models.Abstractions.FileAccess
+@using Moonlight.App.Models.Enums
+@using Moonlight.App.Services
+@using Moonlight.App.Services.Utils
+@using Moonlight.Shared.Components.Files
+
+@inject JwtService JwtService
+@inject ConfigService ConfigService
+
+@implements IDisposable
+
+<LazyLoader Load="Load" ShowAsCard="true">
+    <FileManager FileAccess="FileAccess" />
+</LazyLoader>
+
+@code
+{
+    [CascadingParameter] public Service Service { get; set; }
+
+    [CascadingParameter] public Server Server { get; set; }
+
+    private IFileAccess FileAccess;
+
+    private async Task Load(LazyLoader lazyLoader)
+    {
+        var ftpLoginJwt = await JwtService.Create(data =>
+        {
+            data.Add("ResourceType", "Server");
+            data.Add("ResourceId", Server.Id.ToString());
+        }, JwtType.FtpLogin, TimeSpan.FromMinutes(5));
+
+        FileAccess = new FtpFileAccess(
+            Server.Node.Fqdn,
+            2021,
+            $"moonlight.{Server.Id}",
+            ftpLoginJwt,
+            ConfigService.Get().FileManager.OperationTimeout
+        );
+    }
+
+    public void Dispose()
+    {
+        FileAccess.Dispose();
+    }
+}
