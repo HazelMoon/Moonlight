@@ -22,7 +22,7 @@
                                 </div>
                             }
 
-                            <div class="ps-3 py-2">
+                            <div class="ps-3 py-2 fs-5">
                                 <span>@(gridItem.Element!.Name)</span>
                             </div>
 
@@ -84,30 +84,10 @@
     {
         DeepY = GetYLength(RootElement);
         DeepX = GetXLength(RootElement);
-        Logger.Info($"GRID: X: {DeepX} Y: {DeepY}");
+        
         Grid = new TreeElementViewData[DeepX, DeepY];
 
         AddElementToGrid(RootElement, null, 0, 0);
-
-        Logger.Info("==============================================");
-        for (int y = 0; y < DeepY; y++)
-        {
-            var line = "   ";
-
-            for (int x = 0; x < DeepX; x++)
-            {
-                if (Grid[x, y] != null)
-                {
-                    line += $" {Grid[x, y]!.Type} ";
-                }
-                else
-                    line += " - ";
-            }
-
-            Logger.Info(line);
-        }
-
-        Logger.Info("==============================================");
     }
 
     private int GetYLength(TreeElement treeElement)
